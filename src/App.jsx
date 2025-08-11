@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { Send, PartyPopper, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
+import { Send, Sparkles, X, MessageSquarePlus } from "lucide-react";
 
+// ---- FIREBASE CONFIG (yours) -------------------------------------------------
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBDTK-DcGqXM1aall7n75suzk_uTCcHIQc",
   authDomain: "rove-kudos.firebaseapp.com",
@@ -34,7 +35,7 @@ async function addKudo({ name, message, team }) {
   });
 }
 
-function useKudos(limit = 200) {
+function useKudos(limit = 150) {
   const [items, setItems] = useState([]);
   useEffect(() => {
     let unsub = () => {};
@@ -53,6 +54,7 @@ function useKudos(limit = 200) {
   return items;
 }
 
+// ---- BRAND -------------------------------------------------------------------
 const BRAND = {
   name: "Rove Kudos",
   primary: "#39C3C9",
@@ -61,99 +63,100 @@ const BRAND = {
   accent: "#FFE574"
 };
 
-const brandShadow = (c) => ({ boxShadow: `0 10px 30px -12px ${c}66` });
+function WallCard({ k }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      style={{ padding: 20, borderRadius: 16, border: `1px solid ${BRAND.grey}`, background: "white" }}
+    >
+      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
+        <div style={{ height: 28, width: 28, borderRadius: 10, background: BRAND.accent }} />
+        <div style={{ fontWeight: 600 }}>{k.name || "Anon RoveStar"}</div>
+        {k.team && <div style={{ fontSize: 12, color: "#64748b" }}>• {k.team}</div>}
+      </div>
+      <div style={{ color: "#0f172a", fontSize: 18, lineHeight: 1.35 }}>{k.message}</div>
+    </motion.div>
+  );
+}
 
-function SubmitPage() {
+function SendModal({ open, onClose }) {
   const [name, setName] = useState("");
   const [team, setTeam] = useState("");
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const [done, setDone] = useState(false);
+  const [ok, setOk] = useState(false);
 
   async function onSend(e) {
-    e.preventDefault();
+    e?.preventDefault();
     if (!message.trim()) return;
     setSending(true);
     try {
       await addKudo({ name, team, message });
-      setDone(true);
+      setOk(true);
       setMessage("");
-    } catch (err) {
-      alert("Could not send. Please try again.");
-      console.error(err);
+      setTimeout(() => { setOk(false); onClose(); }, 1000);
+    } catch (e) {
+      alert("Could not send. Try again.");
+      console.error(e);
     } finally {
       setSending(false);
     }
   }
 
+  if (!open) return null;
   return (
-    <div style={{ minHeight: "100vh", background: BRAND.light, display: "flex", alignItems: "center", justifyContent: "center", padding: 24 }}>
-      <div style={{ width: "100%", maxWidth: 640, background: "white", borderRadius: 24, padding: 24, border: `1px solid ${BRAND.grey}`, ...brandShadow(BRAND.primary) }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 12 }}>
-          <div style={{ height: 40, width: 40, borderRadius: 16, background: BRAND.primary }} />
-          <h1 style={{ margin: 0, fontSize: 20, fontWeight: 600 }}>{BRAND.name} – Share Appreciation</h1>
+    <div
+      style={{ position: "fixed", inset: 0, zIndex: 100, background: "rgba(0,0,0,0.35)", display: "grid", placeItems: "center", padding: 16 }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div style={{ width: "100%", maxWidth: 560, background: "white", borderRadius: 20, padding: 20, border: `1px solid ${BRAND.grey}` }}>
+        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 8 }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ height: 28, width: 28, borderRadius: 10, background: BRAND.primary }} />
+            <div style={{ fontWeight: 700 }}>Send a Kudos</div>
+          </div>
+          <button onClick={onClose} style={{ background: "transparent", border: "none", cursor: "pointer" }} aria-label="Close">
+            <X size={18} />
+          </button>
         </div>
-        <p style={{ color: "#475569", fontSize: 14, marginTop: 0, marginBottom: 16 }}>Your message will appear on the live wall instantly ✨</p>
-
-        <form onSubmit={onSend} style={{ display: "grid", gap: 12 }}>
-          <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Your name (optional)" style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 16px", outline: "none" }} />
-          <input value={team} onChange={(e) => setTeam(e.target.value)} placeholder="Team / Department (optional)" style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 16px", outline: "none" }} />
-          <textarea value={message} onChange={(e) => setMessage(e.target.value)} placeholder="Write your appreciation…" rows={4} maxLength={300} style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 16px", outline: "none" }} />
-          <button disabled={sending || !message.trim()} style={{ borderRadius: 16, padding: "12px 16px", color: "white", background: BRAND.primary, border: "none", display: "flex", alignItems: "center", justifyContent: "center", gap: 8, fontWeight: 600 }}>
+        <form onSubmit={onSend} style={{ display: "grid", gap: 10 }}>
+          <input
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Your name (optional)"
+            style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 14px" }}
+          />
+          <input
+            value={team}
+            onChange={(e) => setTeam(e.target.value)}
+            placeholder="Team / Department (optional)"
+            style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 14px" }}
+          />
+          <textarea
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            placeholder="Write your appreciation… (max 300 chars)"
+            rows={4}
+            maxLength={300}
+            style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 12, padding: "12px 14px" }}
+          />
+          <button
+            disabled={sending || !message.trim()}
+            style={{ borderRadius: 14, padding: "12px 16px", color: "white", background: BRAND.primary, border: "none", fontWeight: 600 }}
+          >
             <span style={{ display: "inline-flex", alignItems: "center", gap: 8 }}><Send size={16}/> {sending ? "Sending…" : "Send to Wall"}</span>
           </button>
+          {ok && <div style={{ color: "#047857", fontSize: 13 }}>Sent! Your message will show on the wall.</div>}
         </form>
-
-        {done && (
-          <div style={{ marginTop: 12, display: "flex", alignItems: "center", gap: 8, color: "#047857" }}>
-            <PartyPopper size={16}/> Thanks! It should show up on the screen now.
-          </div>
-        )}
-
-        <div style={{ marginTop: 16, fontSize: 12, color: "#64748b" }}>
-          Tip: save this link as a QR code so colleagues can open it quickly.
-        </div>
       </div>
     </div>
   );
 }
 
-function WallCard({ k }) {
-  return (
-    <motion.div layout initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} style={{ padding: 20, borderRadius: 16, border: `1px solid ${BRAND.grey}`, background: "white", boxShadow: "0 2px 8px rgba(0,0,0,0.04)" }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 6 }}>
-        <div style={{ height: 32, width: 32, borderRadius: 12, background: BRAND.accent }} />
-        <div style={{ fontWeight: 600 }}>{k.name || "Anon RoveStar"}</div>
-        {k.team && <div style={{ fontSize: 12, color: "#64748b" }}>• {k.team}</div>}
-      </div>
-      <div style={{ color: "#0f172a", fontSize: 18 }}>{k.message}</div>
-    </motion.div>
-  );
-}
-
-function Confetti({ triggerKey }) {
-  const [bursts, setBursts] = useState([]);
-  useEffect(() => {
-    if (!triggerKey) return;
-    const id = Math.random().toString(36).slice(2);
-    setBursts((b) => [...b, id]);
-    const t = setTimeout(() => setBursts((b) => b.filter((x) => x !== id)), 1500);
-    return () => clearTimeout(t);
-  }, [triggerKey]);
-  return (
-    <div style={{ pointerEvents: "none", position: "fixed", inset: 0, overflow: "hidden" }}>
-      {bursts.map((id) => (
-        <motion.div key={id} initial={{ y: 0, opacity: 1 }} animate={{ y: -200, opacity: 0 }} transition={{ duration: 1.4 }} style={{ position: "absolute", left: "50%", top: "50%", fontSize: 32 }}>
-          🎉
-        </motion.div>
-      ))}
-    </div>
-  );
-}
-
-function WallPage() {
+export default function App() {
   const items = useKudos(150);
-  const newestKey = items[0]?.id;
+  const [open, setOpen] = useState(false);
 
   return (
     <div style={{ minHeight: "100vh", background: BRAND.light }}>
@@ -164,7 +167,7 @@ function WallPage() {
             <h1 style={{ margin: 0, fontWeight: 600 }}>{BRAND.name} – Live Wall</h1>
           </div>
           <div style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 14 }}>
-            <Sparkles color={BRAND.primary} size={16}/> Real‑time updates
+            <Sparkles color={BRAND.primary} size={16}/> Real-time updates
           </div>
         </div>
       </header>
@@ -177,27 +180,20 @@ function WallPage() {
         </div>
       </main>
 
-      <Confetti triggerKey={newestKey} />
+      {/* Floating action button */}
+      <button
+        onClick={() => setOpen(true)}
+        style={{
+          position: "fixed", right: 20, bottom: 20, zIndex: 50,
+          background: BRAND.primary, border: "none", color: "white",
+          borderRadius: 9999, padding: "14px 18px", display: "flex", alignItems: "center", gap: 8, fontWeight: 700, boxShadow: "0 10px 24px rgba(57,195,201,0.35)",
+          cursor: "pointer"
+        }}
+      >
+        <MessageSquarePlus size={18}/> Send a Kudos
+      </button>
 
-      <footer style={{ padding: 16, textAlign: "center", fontSize: 12, color: "#64748b" }}>
-        Scan QR to post: your-domain/submit • Display this page: your-domain/wall
-      </footer>
+      <SendModal open={open} onClose={() => setOpen(false)} />
     </div>
   );
-}
-
-function usePath() {
-  const [p, setP] = useState(window.location.pathname);
-  useEffect(() => {
-    const onPop = () => setP(window.location.pathname);
-    window.addEventListener("popstate", onPop);
-    return () => window.removeEventListener("popstate", onPop);
-  }, []);
-  return p.replace(/\/$/, "");
-}
-
-export default function App() {
-  const path = usePath();
-  if (path === "/submit") return <SubmitPage/>;
-  return <WallPage/>;
 }
