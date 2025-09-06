@@ -441,3 +441,37 @@ export default function App() {
     </div>
   );
 }
+// --- ADMIN one-click clear helpers ---
+async function clearKudosNowNoArchive() {
+  const { db } = await ensureFirebase();
+  const { collection, getDocs, writeBatch, doc } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "kudos"));
+  const docs = [];
+  snap.forEach(d => docs.push(d.id));
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = writeBatch(db);
+    docs.slice(i, i + 400).forEach(id => batch.delete(doc(db, "kudos", id)));
+    await batch.commit();
+  }
+  alert("Cleared live kudos (no archive).");
+}
+
+async function archiveAndClearKudosNow() {
+  const todayKey = dateKeyDubai();
+  const { db } = await ensureFirebase();
+  const { collection, getDocs, writeBatch, doc, serverTimestamp } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "kudos"));
+  const docs = [];
+  snap.forEach(d => docs.push({ id: d.id, data: d.data() }));
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = writeBatch(db);
+    docs.slice(i, i + 400).forEach(({ id, data }) => {
+      batch.set(doc(db, `kudos_archive/${todayKey}/items/${id}`), {
+        ...data, archivedAt: serverTimestamp(), archivedDateKey: todayKey
+      });
+      batch.delete(doc(db, "kudos", id));
+    });
+    await batch.commit();
+  }
+  alert(`Archived ${docs.length} and cleared live kudos.`);
+}
