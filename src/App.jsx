@@ -99,7 +99,6 @@ async function loadArchive(dateKey) {
   const { db } = await ensureFirebase();
   const { collection, getDocs, orderBy, query } = await import("firebase/firestore");
   const col = collection(db, `kudos_archive/${dateKey}/items`);
-  // orderBy createdAt may not exist if some were missing; ignore if error
   try {
     const q = query(col, orderBy("createdAt", "desc"));
     const snap = await getDocs(q);
@@ -110,29 +109,44 @@ async function loadArchive(dateKey) {
     const snap = await getDocs(col);
     const out = [];
     snap.forEach(d => out.push({ id: d.id, ...d.data() }));
-    // Best-effort fallback: newest first by existence of createdAt
     out.sort((a,b) => (b?.createdAt?.seconds||0) - (a?.createdAt?.seconds||0));
     return out;
   }
 }
 
-function useKudos(limit = 150) {
-  const [items, setItems] = useState([]);
-  useEffect(() => {
-    let unsub = () => {};
-    (async () => {
-      const { db } = await ensureFirebase();
-      const { collection, onSnapshot, orderBy, limit: lim, query } = await import("firebase/firestore");
-      const q = query(collection(db, "kudos"), orderBy("createdAt", "desc"), lim(limit));
-      unsub = onSnapshot(q, (snap) => {
-        const out = [];
-        snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
-        setItems(out);
+// --- ADMIN one-click clear helpers ---
+async function clearKudosNowNoArchive() {
+  const { db } = await ensureFirebase();
+  const { collection, getDocs, writeBatch, doc } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "kudos"));
+  const ids = [];
+  snap.forEach(d => ids.push(d.id));
+  for (let i = 0; i < ids.length; i += 400) {
+    const batch = writeBatch(db);
+    ids.slice(i, i + 400).forEach(id => batch.delete(doc(db, "kudos", id)));
+    await batch.commit();
+  }
+  alert("Cleared live kudos (no archive).");
+}
+
+async function archiveAndClearKudosNow() {
+  const todayKey = dateKeyDubai();
+  const { db } = await ensureFirebase();
+  const { collection, getDocs, writeBatch, doc, serverTimestamp } = await import("firebase/firestore");
+  const snap = await getDocs(collection(db, "kudos"));
+  const docs = [];
+  snap.forEach(d => docs.push({ id: d.id, data: d.data() }));
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = writeBatch(db);
+    docs.slice(i, i + 400).forEach(({ id, data }) => {
+      batch.set(doc(db, `kudos_archive/${todayKey}/items/${id}`), {
+        ...data, archivedAt: serverTimestamp(), archivedDateKey: todayKey
       });
-    })();
-    return () => unsub();
-  }, [limit]);
-  return items;
+      batch.delete(doc(db, "kudos", id));
+    });
+    await batch.commit();
+  }
+  alert(`Archived ${docs.length} and cleared live kudos.`);
 }
 
 // ---- BRAND -------------------------------------------------------------------
@@ -172,7 +186,7 @@ function SendModal({ open, onClose }) {
       setMessage("");
       setTimeout(() => { setOk(false); onClose(); }, 1000);
     } catch (e) {
-      if (e?.code === "WALL_CLOSED") alert("Kudos Wall is closed now. Please come back between 09:00–21:00 (Dubai).");
+    if (e?.code === "WALL_CLOSED") alert("Kudos Wall is closed now. Please come back between 09:00–21:00 (Dubai).");
       else { alert("Could not send. Try again."); console.error(e); }
     } finally { setSending(false); }
   }
@@ -264,12 +278,8 @@ function ArchiveModal({ open, onClose }) {
 
         <form onSubmit={fetchArchive} style={{ display: "flex", gap: 10, alignItems: "center", marginBottom: 12, flexWrap: "wrap" }}>
           <label style={{ fontSize: 14, color: "#334155" }}>Pick a date:</label>
-          <input
-            type="date"
-            value={dateKey}
-            onChange={(e) => setDateKey(e.target.value)}
-            style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 10, padding: "8px 10px" }}
-          />
+          <input type="date" value={dateKey} onChange={(e) => setDateKey(e.target.value)}
+                 style={{ border: `1px solid ${BRAND.grey}`, borderRadius: 10, padding: "8px 10px" }}/>
           <button type="submit" style={{ borderRadius: 10, padding: "8px 12px", color: "white", background: BRAND.primary, border: "none", fontWeight: 600 }}>
             {loading ? "Loading…" : "Load"}
           </button>
@@ -302,6 +312,7 @@ export default function App() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showSeeYou, setShowSeeYou] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
+  const [admin, setAdmin] = useState(false);
 
   // Live Dubai date/time
   useEffect(() => {
@@ -312,6 +323,12 @@ export default function App() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
+  }, []);
+
+  // Detect admin mode (?admin=1)
+  useEffect(() => {
+    const qs = new URLSearchParams(window.location.search);
+    if (qs.get("admin") === "1") setAdmin(true);
   }, []);
 
   // Auto-archive & clear at 21:00 Dubai
@@ -374,12 +391,28 @@ export default function App() {
               <Sparkles color={BRAND.primary} size={16}/> Real-time updates
             </div>
             <div style={{ color: "#64748b" }}>{dateTime}</div>
-            <button
-              onClick={() => setArchiveOpen(true)}
-              style={{ borderRadius: 10, padding: "6px 10px", color: "#0f172a", background: "white", border: `1px solid ${BRAND.grey}`, fontWeight: 600 }}
-            >
+
+            {/* Archive */}
+            <button onClick={() => setArchiveOpen(true)}
+              style={{ borderRadius: 10, padding: "6px 10px", color: "#0f172a", background: "white", border: `1px solid ${BRAND.grey}`, fontWeight: 600 }}>
               Archive
             </button>
+
+            {/* Admin buttons (only with ?admin=1) */}
+            {admin && (
+              <div style={{ display: "flex", gap: 8 }}>
+                <button onClick={archiveAndClearKudosNow}
+                  style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#0ea5e9", border: "none", fontWeight: 600 }}
+                  title="Archive today then clear">
+                  Admin: Archive & Clear
+                </button>
+                <button onClick={clearKudosNowNoArchive}
+                  style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#ef4444", border: "none", fontWeight: 600 }}
+                  title="Clear without archive">
+                  Admin: Clear Only
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </header>
@@ -421,7 +454,7 @@ export default function App() {
       </main>
 
       {/* FAB (hidden when closed) */}
-      {openNow && (
+      {isOpenNowDubai() && (
         <button
           onClick={() => setOpen(true)}
           style={{
@@ -440,38 +473,4 @@ export default function App() {
       <ArchiveModal open={archiveOpen} onClose={() => setArchiveOpen(false)} />
     </div>
   );
-}
-// --- ADMIN one-click clear helpers ---
-async function clearKudosNowNoArchive() {
-  const { db } = await ensureFirebase();
-  const { collection, getDocs, writeBatch, doc } = await import("firebase/firestore");
-  const snap = await getDocs(collection(db, "kudos"));
-  const docs = [];
-  snap.forEach(d => docs.push(d.id));
-  for (let i = 0; i < docs.length; i += 400) {
-    const batch = writeBatch(db);
-    docs.slice(i, i + 400).forEach(id => batch.delete(doc(db, "kudos", id)));
-    await batch.commit();
-  }
-  alert("Cleared live kudos (no archive).");
-}
-
-async function archiveAndClearKudosNow() {
-  const todayKey = dateKeyDubai();
-  const { db } = await ensureFirebase();
-  const { collection, getDocs, writeBatch, doc, serverTimestamp } = await import("firebase/firestore");
-  const snap = await getDocs(collection(db, "kudos"));
-  const docs = [];
-  snap.forEach(d => docs.push({ id: d.id, data: d.data() }));
-  for (let i = 0; i < docs.length; i += 400) {
-    const batch = writeBatch(db);
-    docs.slice(i, i + 400).forEach(({ id, data }) => {
-      batch.set(doc(db, `kudos_archive/${todayKey}/items/${id}`), {
-        ...data, archivedAt: serverTimestamp(), archivedDateKey: todayKey
-      });
-      batch.delete(doc(db, "kudos", id));
-    });
-    await batch.commit();
-  }
-  alert(`Archived ${docs.length} and cleared live kudos.`);
 }
