@@ -114,7 +114,7 @@ async function loadArchive(dateKey) {
   }
 }
 
-// --- ADMIN one-click clear helpers ---
+// --- ADMIN one-click clear helpers (always available) ---
 async function clearKudosNowNoArchive() {
   const { db } = await ensureFirebase();
   const { collection, getDocs, writeBatch, doc } = await import("firebase/firestore");
@@ -262,7 +262,6 @@ function ArchiveModal({ open, onClose }) {
 
   useEffect(() => {
     if (open) fetchArchive();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
 
   if (!open) return null;
@@ -317,9 +316,8 @@ export default function App() {
   const [showWelcome, setShowWelcome] = useState(false);
   const [showSeeYou, setShowSeeYou] = useState(false);
   const [archiveOpen, setArchiveOpen] = useState(false);
-  const [admin, setAdmin] = useState(false);
 
-  // Subscribe to kudos
+  // Subscribe to kudos live
   useEffect(() => {
     let unsub = () => {};
     (async () => {
@@ -344,12 +342,6 @@ export default function App() {
     tick();
     const interval = setInterval(tick, 1000);
     return () => clearInterval(interval);
-  }, []);
-
-  // Detect admin mode (?admin=1)
-  useEffect(() => {
-    const qs = new URLSearchParams(window.location.search);
-    if (qs.get("admin") === "1") setAdmin(true);
   }, []);
 
   // Auto-archive & clear at 21:00 Dubai
@@ -407,6 +399,7 @@ export default function App() {
             <div style={{ height: 32, width: 32, borderRadius: 12, background: BRAND.primary }} />
             <h1 style={{ margin: 0, fontWeight: 600 }}>{BRAND.name} – Live Wall</h1>
           </div>
+          {/* Right side actions */}
           <div style={{ display: "flex", alignItems: "center", gap: 12, fontSize: 14 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
               <Sparkles color={BRAND.primary} size={16}/> Real-time updates
@@ -414,26 +407,30 @@ export default function App() {
             <div style={{ color: "#64748b" }}>{dateTime}</div>
 
             {/* Archive */}
-            <button onClick={() => setArchiveOpen(true)}
-              style={{ borderRadius: 10, padding: "6px 10px", color: "#0f172a", background: "white", border: `1px solid ${BRAND.grey}`, fontWeight: 600 }}>
+            <button
+              onClick={() => setArchiveOpen(true)}
+              style={{ borderRadius: 10, padding: "6px 10px", color: "#0f172a", background: "white", border: `1px solid ${BRAND.grey}`, fontWeight: 600 }}
+            >
               Archive
             </button>
 
-            {/* Admin buttons (only with ?admin=1) */}
-            {admin && (
-              <div style={{ display: "flex", gap: 8 }}>
-                <button onClick={archiveAndClearKudosNow}
-                  style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#0ea5e9", border: "none", fontWeight: 600 }}
-                  title="Archive today then clear">
-                  Admin: Archive & Clear
-                </button>
-                <button onClick={clearKudosNowNoArchive}
-                  style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#ef4444", border: "none", fontWeight: 600 }}
-                  title="Clear without archive">
-                  Admin: Clear Only
-                </button>
-              </div>
-            )}
+            {/* Admin buttons (always visible) */}
+            <div style={{ display: "flex", gap: 8 }}>
+              <button
+                onClick={archiveAndClearKudosNow}
+                style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#0ea5e9", border: "none", fontWeight: 600 }}
+                title="Archive today then clear"
+              >
+                Admin: Archive & Clear
+              </button>
+              <button
+                onClick={clearKudosNowNoArchive}
+                style={{ borderRadius: 10, padding: "6px 10px", color: "white", background: "#ef4444", border: "none", fontWeight: 600 }}
+                title="Clear without archive"
+              >
+                Admin: Clear Only
+              </button>
+            </div>
           </div>
         </div>
       </header>
