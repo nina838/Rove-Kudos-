@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import { Send, Sparkles, X, MessageSquarePlus } from "lucide-react";
 
-// ---- FIREBASE CONFIG (yours) -------------------------------------------------
+// ---- FIREBASE CONFIG -------------------------------------------------
 const FIREBASE_CONFIG = {
   apiKey: "AIzaSyBDTK-DcGqXM1aall7n75suzk_uTCcHIQc",
   authDomain: "rove-kudos.firebaseapp.com",
@@ -32,9 +32,9 @@ function nowDubai() {
     year: "numeric", month: "2-digit", day: "2-digit",
     hour: "2-digit", minute: "2-digit", second: "2-digit",
     hour12: false
-  }).formatToParts(now).reduce((acc,p)=> (acc[p.type]=p.value, acc), {});
-  const [d,m,y] = [parts.day, parts.month, parts.year].map(x=>parseInt(x,10));
-  const [hh,mm,ss] = [parts.hour, parts.minute, parts.second].map(x=>parseInt(x,10));
+  }).formatToParts(now).reduce((acc, p) => (acc[p.type] = p.value, acc), {});
+  const [d, m, y] = [parts.day, parts.month, parts.year].map(x => parseInt(x, 10));
+  const [hh, mm, ss] = [parts.hour, parts.minute, parts.second].map(x => parseInt(x, 10));
   return { y, m, d, hh, mm, ss };
 }
 function dateKeyDubai() {
@@ -109,7 +109,7 @@ async function loadArchive(dateKey) {
     const snap = await getDocs(col);
     const out = [];
     snap.forEach(d => out.push({ id: d.id, ...d.data() }));
-    out.sort((a,b) => (b?.createdAt?.seconds||0) - (a?.createdAt?.seconds||0));
+    out.sort((a, b) => (b?.createdAt?.seconds || 0) - (a?.createdAt?.seconds || 0));
     return out;
   }
 }
@@ -186,8 +186,12 @@ function SendModal({ open, onClose }) {
       setMessage("");
       setTimeout(() => { setOk(false); onClose(); }, 1000);
     } catch (e) {
-    if (e?.code === "WALL_CLOSED") alert("Kudos Wall is closed now. Please come back between 09:00–21:00 (Dubai).");
-      else { alert("Could not send. Try again."); console.error(e); }
+      if (e?.code === "WALL_CLOSED") {
+        alert("Kudos Wall is closed now. Please come back between 09:00–21:00 (Dubai).");
+      } else {
+        alert("Could not send. Try again.");
+        console.error(e);
+      }
     } finally { setSending(false); }
   }
 
@@ -305,8 +309,9 @@ function ArchiveModal({ open, onClose }) {
   );
 }
 
+// ---- MAIN APP -----------------------------------------------------------
 export default function App() {
-  const items = useKudos(150);
+  const [items, setItems] = useState([]);
   const [open, setOpen] = useState(false);
   const [dateTime, setDateTime] = useState("");
   const [showWelcome, setShowWelcome] = useState(false);
@@ -314,7 +319,23 @@ export default function App() {
   const [archiveOpen, setArchiveOpen] = useState(false);
   const [admin, setAdmin] = useState(false);
 
-  // Live Dubai date/time
+  // Subscribe to kudos
+  useEffect(() => {
+    let unsub = () => {};
+    (async () => {
+      const { db } = await ensureFirebase();
+      const { collection, onSnapshot, orderBy, limit, query } = await import("firebase/firestore");
+      const q = query(collection(db, "kudos"), orderBy("createdAt", "desc"), limit(150));
+      unsub = onSnapshot(q, (snap) => {
+        const out = [];
+        snap.forEach((d) => out.push({ id: d.id, ...d.data() }));
+        setItems(out);
+      });
+    })();
+    return () => unsub();
+  }, []);
+
+  // Live date/time
   useEffect(() => {
     const tick = () => {
       const now = new Date();
