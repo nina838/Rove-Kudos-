@@ -492,3 +492,209 @@ export default function App() {
     </div>
   );
 }
+// who is allowed to see admin buttons
+const ALLOWED_ADMIN_IDS = ["your-user-id"]; // <- put YOUR id here
+
+function canSeeAdmin(currentUserId) {
+  return ALLOWED_ADMIN_IDS.map(String).includes(String(currentUserId));
+}
+
+function groupByMonth(kudos, getRecipient, getCreatedAt, selectedId) {
+  const counts = Array(12).fill(0);
+  kudos.forEach(k => {
+    if (String(getRecipient(k)) !== String(selectedId)) return;
+    const d = new Date(getCreatedAt(k));
+    if (!isNaN(d)) counts[d.getMonth()]++;
+  });
+  const months = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  return months.map((m,i)=>({ month:m, kudos:counts[i] }));
+}
+
+function downloadCsv(rows) {
+  const csv = ["Month,Kudos", ...rows.map(r => `${r.month},${r.kudos}`)].join("\n");
+  const url = URL.createObjectURL(new Blob([csv], {type:"text/csv;charset=utf-8;"}));
+  const a = document.createElement("a"); a.href = url; a.download = "kudos_monthly.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+import { useState, useMemo } from "react";
+// (Optional icons) import { Lock, Trash2, Archive } from "lucide-react";
+// (Optional chart) import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
+
+function PasscodeDialog({ open, onClose, onConfirm }) {
+  const [pin, setPin] = useState("");
+  const [err, setErr]   = useState("");
+
+  if (!open) return null;
+  return (
+    <>
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.4)"}} onClick={onClose}/>
+      <div style={{position:"fixed",left:"50%",top:"50%",transform:"translate(-50%,-50%)",background:"#fff",padding:16,borderRadius:12,width:360,maxWidth:"90%",boxShadow:"0 10px 30px rgba(0,0,0,.15)"}}>
+        <h3 style={{marginTop:0}}>Unlock admin controls</h3>
+        <p style={{color:"#6b7280"}}>Enter your passcode.</p>
+        <input type="password" value={pin} onChange={(e)=>{ setPin(e.target.value); setErr(""); }} style={{width:"100%",padding:"10px 12px",borderRadius:10,border:"1px solid #d1d5db"}}/>
+        {err && <div style={{color:"#b91c1c",marginTop:6,fontSize:13}}>{err}</div>}
+        <div style={{display:"flex",justifyContent:"flex-end",gap:8,marginTop:12}}>
+          <button onClick={onClose} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff"}}>Cancel</button>
+          <button onClick={async ()=>{
+            // call your server to check the PIN (recommended),
+            // or compare locally if you must (not recommended)
+            const ok = await onConfirm(pin);
+            if (!ok) { setErr("Incorrect passcode"); return; }
+            setPin("");
+          }} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #000",background:"#000",color:"#fff"}}>Confirm</button>
+        </div>
+      </div>
+    </>
+  );
+}
+// state to control admin visibility & unlock
+const [adminUnlocked, setAdminUnlocked] = useState(false);
+const [showUnlock, setShowUnlock] = useState(false);
+const [cachedCode, setCachedCode] = useState("");
+const isMyAdminView = canSeeAdmin(currentUserId);
+
+// verify the passcode server-side (best) or locally (not recommended)
+async function verifyPin(pin) {
+  try {
+    const r = await fetch("/api/verify-pin", { method:"POST", body: JSON.stringify({ code: pin }) });
+    const ok = r.ok;
+    if (ok) { setAdminUnlocked(true); setCachedCode(pin); setShowUnlock(false); }
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+// Use cachedCode when calling archive/delete so the server re-checks it.
+async function onArchive(kudosId) {
+  // NOTE: pass kudosId if you archive specific items
+  const r = await fetch("/api/kudos/archive", {
+    method: "POST",
+    body: JSON.stringify({ code: cachedCode, userId: currentUserId, kudosId })
+  });
+  if (!r.ok) return alert("Forbidden");
+  alert("Archived");
+}
+async function onDelete(kudosId) {
+  const r = await fetch("/api/kudos/delete", {
+    method: "POST",
+    body: JSON.stringify({ code: cachedCode, userId: currentUserId, kudosId })
+  });
+  if (!r.ok) return alert("Forbidden");
+  alert("Deleted");
+}
+// state to control admin visibility & unlock
+const [adminUnlocked, setAdminUnlocked] = useState(false);
+const [showUnlock, setShowUnlock] = useState(false);
+const [cachedCode, setCachedCode] = useState("");
+const isMyAdminView = canSeeAdmin(currentUserId);
+
+// verify the passcode server-side (best) or locally (not recommended)
+async function verifyPin(pin) {
+  try {
+    const r = await fetch("/api/verify-pin", { method:"POST", body: JSON.stringify({ code: pin }) });
+    const ok = r.ok;
+    if (ok) { setAdminUnlocked(true); setCachedCode(pin); setShowUnlock(false); }
+    return ok;
+  } catch {
+    return false;
+  }
+}
+
+// Use cachedCode when calling archive/delete so the server re-checks it.
+async function onArchive(kudosId) {
+  // NOTE: pass kudosId if you archive specific items
+  const r = await fetch("/api/kudos/archive", {
+    method: "POST",
+    body: JSON.stringify({ code: cachedCode, userId: currentUserId, kudosId })
+  });
+  if (!r.ok) return alert("Forbidden");
+  alert("Archived");
+}
+async function onDelete(kudosId) {
+  const r = await fetch("/api/kudos/delete", {
+    method: "POST",
+    body: JSON.stringify({ code: cachedCode, userId: currentUserId, kudosId })
+  });
+  if (!r.ok) return alert("Forbidden");
+  alert("Deleted");
+}
+{/* Admin buttons: hidden for everyone except you, and require unlock */}
+{isMyAdminView && (
+  adminUnlocked ? (
+    <div style={{display:"flex",gap:8}}>
+      <button onClick={()=>onArchive(/* optional kudosId */)} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #e5e7eb",background:"#f3f4f6"}}>Archive</button>
+      <button onClick={()=>onDelete(/* optional kudosId */)} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #dc2626",background:"#dc2626",color:"#fff"}}>Delete</button>
+    </div>
+  ) : (
+    <button onClick={()=>setShowUnlock(true)} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #d1d5db",background:"#fff"}}>Unlock</button>
+  )
+)}
+
+<PasscodeDialog open={showUnlock} onClose={()=>setShowUnlock(false)} onConfirm={verifyPin}/>
+// adapt to your actual shape
+const getRecipient = (k) => k.toUserId;
+const getRecipientName = (k) => k.toUserName;
+const getCreatedAt = (k) => k.createdAt;
+const [personQuery, setPersonQuery] = useState("");
+const people = useMemo(()=>{
+  const m = new Map();
+  kudos.forEach(k => {
+    const id = getRecipient(k);
+    if (!id) return;
+    const name = getRecipientName?.(k) ?? String(id);
+    if (!m.has(id)) m.set(id, name);
+  });
+  return Array.from(m, ([id,name]) => ({ id, name }));
+}, [kudos]);
+
+const selected = useMemo(()=>{
+  if (!personQuery) return null;
+  const exact = people.find(p => String(p.id) === personQuery.trim());
+  if (exact) return exact;
+  const q = personQuery.trim().toLowerCase();
+  return people.find(p => p.name.toLowerCase().includes(q)) || null;
+}, [people, personQuery]);
+
+const series = useMemo(()=>{
+  return selected
+    ? groupByMonth(kudos, getRecipient, getCreatedAt, selected.id)
+    : [];
+}, [kudos, selected]);
+
+const total = series.reduce((a,b)=>a + b.kudos, 0);
+<div style={{border:"1px solid #e5e7eb",borderRadius:16,overflow:"hidden",marginTop:16}}>
+  <div style={{padding:16,borderBottom:"1px solid #e5e7eb",display:"flex",gap:8,alignItems:"center",flexWrap:"wrap"}}>
+    <div style={{fontWeight:600}}>Kudos by Month</div>
+    <input
+      placeholder="Type a name or paste an ID…"
+      value={personQuery}
+      onChange={(e)=>setPersonQuery(e.target.value)}
+      style={{marginLeft:"auto",padding:"10px 12px",borderRadius:10,border:"1px solid #d1d5db",minWidth:220}}
+    />
+    <button onClick={()=>downloadCsv(series)} disabled={!series.length} style={{padding:"10px 14px",borderRadius:10,border:"1px solid #000",background:"#000",color:"#fff"}}>
+      Export CSV
+    </button>
+  </div>
+
+  <div style={{padding:16,color:"#6b7280"}}>
+    {selected ? <>Showing monthly kudos for <b>{selected.name}</b>. Total: <b>{total}</b></> : <>Select a person to see a monthly breakdown.</>}
+  </div>
+
+  <div style={{padding:16}}>
+    <table style={{width:"100%",borderCollapse:"collapse",fontSize:14}}>
+      <thead>
+        <tr><th style={{textAlign:"left",borderBottom:"1px solid #e5e7eb",padding:"8px 12px"}}>Month</th>
+            <th style={{textAlign:"left",borderBottom:"1px solid #e5e7eb",padding:"8px 12px"}}>Kudos</th></tr>
+      </thead>
+      <tbody>
+        {series.map(r=>(
+          <tr key={r.month}>
+            <td style={{borderBottom:"1px solid #f3f4f6",padding:"8px 12px"}}>{r.month}</td>
+            <td style={{borderBottom:"1px solid #f3f4f6",padding:"8px 12px"}}>{r.kudos}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </div>
+</div>
