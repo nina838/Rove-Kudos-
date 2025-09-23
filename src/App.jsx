@@ -1,3 +1,4 @@
+// src/App.jsx
 import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import Wall from "./pages/Wall.jsx";
@@ -32,40 +33,17 @@ function Home() {
       <div className="card-head">Welcome to Rovester</div>
       <div className="card-body">
         <p className="muted">
-          Celebrate teammates on the Rovester Kudos Wall. Click “Open Rovester Wall” to view, unlock admin tools, and generate monthly reports.
+          Celebrate teammates on the Rovester Kudos Wall. Click “Open Rovester Wall” to view,
+          unlock admin tools (passcode <b>12345</b>), and generate monthly reports.
         </p>
         <ul>
-         {/* Admin controls (locked) */}
-{canSeeUnlock ? (
-  !adminUnlocked ? (
-    <button
-      onClick={() => { setPin(""); setPinErr(""); setShowPin(true); }}
-      style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid #d1d5db", background: "#fff" }}
-    >
-      Unlock admin
-    </button>
-  ) : (
-    <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-      <button
-        onClick={() => { /* your ARCHIVE handler here */ }}
-        style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid #e5e7eb", background: "#f3f4f6" }}
-      >
-        Archive
-      </button>
-      <button
-        onClick={() => { /* your DELETE handler here */ }}
-        style={{ padding: "10px 14px", borderRadius: 12, border: "1px solid #dc2626", background: "#dc2626", color: "#fff" }}
-      >
-        Delete
-      </button>
-    </div>
-  )
-) : null}
-
-          <li>Generate a monthly report for any month & year, optionally per person.</li>
+          <li>Admin actions are locked until you enter the passcode.</li>
+          <li>Generate a monthly report for any month &amp; year, optionally per person.</li>
           <li>Export CSV for quick sharing.</li>
         </ul>
-        <p><Link to="/wall" className="btn">Open Rovester Wall</Link></p>
+        <p>
+          <Link to="/wall" className="btn">Open Rovester Wall</Link>
+        </p>
       </div>
     </div>
   );
