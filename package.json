@@ -1,22 +1,20 @@
 {
-  "name": "rove-kudos-wall",
+  "name": "rovester-kudos",
   "private": true,
   "version": "1.0.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "preview": "vite preview"
+    "preview": "vite preview --port 4173"
   },
   "dependencies": {
-    "firebase": "^10.12.4",
-    "framer-motion": "^11.2.6",
-    "lucide-react": "^0.454.0",
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-router-dom": "6.26.2"
   },
   "devDependencies": {
-    "@vitejs/plugin-react": "^4.2.0",
-    "vite": "^5.2.0"
+    "@vitejs/plugin-react": "4.3.1",
+    "vite": "5.4.8"
   }
 }
