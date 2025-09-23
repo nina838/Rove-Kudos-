@@ -1,28 +1,19 @@
+// src/components/KudosPanel.jsx
 import React, { useMemo, useState } from "react";
 
 /**
- * KudosPanel (Rovester edition)
- * - Admin / Archive / Delete are hidden until unlocked with passcode "12345".
- * - Monthly report: select person (optional), month + year, Generate + Export CSV.
- *
- * Props:
- *   kudos: Array<any>
- *   getRecipient(k): string|number   // e.g., k.toUserId
- *   getRecipientName(k): string      // e.g., k.toUserName
- *   getCreatedAt(k): string|Date     // e.g., k.createdAt
- *   currentUserId: string|number
- *   allowedAdminIds?: Array<string|number>
- *   onArchive?: () => Promise<void>|void
- *   onDelete?: () => Promise<void>|void
+ * STRICT LOCK:
+ * - Archive/Delete NEVER render unless unlocked via PIN 12345.
+ * - "Unlock admin" button only shows if currentUserId matches allowedAdminIds.
+ * - Debug line at the top helps verify state.
  */
-
 export default function KudosPanel({
   kudos,
   getRecipient,
   getRecipientName,
   getCreatedAt,
   currentUserId,
-  allowedAdminIds = [String(currentUserId)],
+  allowedAdminIds = [], // IMPORTANT: keep this a *fixed* list (do NOT pass currentUserId here)
   onArchive,
   onDelete,
 }) {
@@ -43,17 +34,17 @@ export default function KudosPanel({
     td: { borderBottom: "1px solid #f3f4f6", padding: "8px 12px" }
   };
 
-  // ---------- Admin lock (PIN = 12345) ----------
-  const canSeeAdmin = (allowedAdminIds || []).map(String).includes(String(currentUserId));
+  // ---------- STRICT Admin lock (PIN = 12345) ----------
+  const PASSCODE = "12345";
+  const canSeeUnlock = (allowedAdminIds || []).map(String).includes(String(currentUserId));
+
   const [unlocked, setUnlocked] = useState(false);
   const [showPin, setShowPin] = useState(false);
   const [pin, setPin] = useState("");
   const [pinErr, setPinErr] = useState("");
 
-  function checkPasscode(input) { return String(input) === "12345"; }
-
   function handleConfirmPin() {
-    if (!checkPasscode(pin)) {
+    if (pin !== PASSCODE) {
       setPinErr("Incorrect passcode");
       return;
     }
@@ -67,7 +58,7 @@ export default function KudosPanel({
 
   const people = useMemo(() => {
     const m = new Map();
-    for (const k of kudos) {
+    for (const k of kudos || []) {
       const id = getRecipient(k);
       if (id == null) continue;
       const name = getRecipientName?.(k) ?? String(id);
@@ -97,7 +88,7 @@ export default function KudosPanel({
   }
 
   function generateMonthReport() {
-    const rows = new Map(); // personId -> { name, count }
+    const rows = new Map();
     (kudos || []).forEach(k => {
       const dt = new Date(getCreatedAt(k));
       if (isNaN(dt)) return;
@@ -133,7 +124,7 @@ export default function KudosPanel({
   const allMonthsForSelected = useMemo(() => {
     if (!selectedPerson) return [];
     const counts = Array(12).fill(0);
-    for (const k of kudos) {
+    for (const k of kudos || []) {
       if (String(getRecipient(k)) !== selectedPerson.id) continue;
       const dt = new Date(getCreatedAt(k));
       if (!isNaN(dt)) counts[dt.getMonth()]++;
@@ -143,19 +134,27 @@ export default function KudosPanel({
 
   return (
     <div>
+      {/* DEBUG: remove later if you want */}
+      <div style={{ marginBottom: 8, fontSize: 12, color: "#64748b" }}>
+        Debug — currentUserId: <b>{String(currentUserId)}</b> | allowed: <b>{String(canSeeUnlock)}</b> | unlocked: <b>{String(unlocked)}</b>
+      </div>
 
-      {/* Admin Controls (Rovester) */}
+      {/* Admin Controls (strict) */}
       <section style={S.section}>
         <h3 style={{ marginTop: 0 }}>Rovester Admin</h3>
-        {!canSeeAdmin && <p style={S.subtle}>You don’t have access to Rovester admin tools.</p>}
 
-        {canSeeAdmin && !unlocked && (
+        {!canSeeUnlock && (
+          <p style={S.subtle}>You don’t have access to Rovester admin tools.</p>
+        )}
+
+        {canSeeUnlock && !unlocked && (
           <button style={S.btn("outline")} onClick={() => { setPin(""); setPinErr(""); setShowPin(true); }}>
             Unlock admin (passcode required)
           </button>
         )}
 
-        {canSeeAdmin && unlocked && (
+        {/* STRICT: Archive/Delete are NEVER rendered unless unlocked */}
+        {canSeeUnlock && unlocked && (
           <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button style={S.btn("secondary")} onClick={() => onArchive?.()}>Archive</button>
             <button style={S.btn("danger")} onClick={() => onDelete?.()}>Delete</button>
@@ -196,75 +195,104 @@ export default function KudosPanel({
       {/* Monthly Report */}
       <section style={S.section}>
         <h3 style={{ marginTop: 0 }}>Rovester Monthly Kudos Report</h3>
-        <div style={{ ...S.row, marginBottom: 8 }}>
-          <input
-            placeholder="Filter by person (type name or paste ID)…"
-            value={personQuery}
-            onChange={(e) => setPersonQuery(e.target.value)}
-            list="rovester-people"
-            style={{ ...S.input, minWidth: 260 }}
-          />
-          <datalist id="rovester-people">
-            {people.map(p => <option key={p.id} value={p.name} />)}
-            {people.map(p => <option key={p.id + "-id"} value={p.id} />)}
-          </datalist>
-
-          <select value={selMonth} onChange={(e)=>setSelMonth(Number(e.target.value))} style={S.input}>
-            {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
-          </select>
-
-          <input
-            type="number"
-            value={selYear}
-            onChange={(e)=>setSelYear(Number(e.target.value))}
-            style={{ ...S.input, width: 110 }}
-          />
-
-          <button style={S.btn()} onClick={generateMonthReport}>Generate</button>
-          <button style={S.btn("outline")} onClick={exportGeneratedCsv} disabled={!generatedRows.length}>Export CSV</button>
-        </div>
-
-        {generatedRows.length ? (
-          <>
-            <div style={S.subtle}>
-              Generated for <b>{MONTHS[generatedFor.month]} {generatedFor.year}</b>
-              {generatedFor.person ? <> — Person: <b>{generatedFor.person}</b></> : null}
-            </div>
-            <table style={S.table}>
-              <thead>
-                <tr><th style={S.th}>Person</th><th style={S.th}>Kudos</th></tr>
-              </thead>
-              <tbody>
-                {generatedRows.map((r, idx) => (
-                  <tr key={idx}>
-                    <td style={S.td}>{r.name}</td>
-                    <td style={S.td}>{r.count}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        ) : (
-          <div style={S.subtle}>Pick a month/year (and optionally a person) then click Generate.</div>
-        )}
-
-        {/* Optional: all months for selected person */}
-        {selectedPerson && (
-          <>
-            <div style={{ marginTop: 16, fontWeight: 600 }}>
-              All months for {selectedPerson.name}
-            </div>
-            <table style={S.table}>
-              <thead><tr><th style={S.th}>Month</th><th style={S.th}>Kudos</th></tr></thead>
-              <tbody>
-                {allMonthsForSelected.map(r => (
-                  <tr key={r.month}><td style={S.td}>{r.month}</td><td style={S.td}>{r.kudos}</td></tr>
-                ))}
-              </tbody>
-            </table>
-          </>
-        )}
+        <ReportControls
+          MONTHS={MONTHS}
+          people={people}
+          selMonth={selMonth}
+          setSelMonth={setSelMonth}
+          selYear={selYear}
+          setSelYear={setSelYear}
+          personQuery={personQuery}
+          setPersonQuery={setPersonQuery}
+          generatedRows={generatedRows}
+          generatedFor={generatedFor}
+          generateMonthReport={generateMonthReport}
+          exportGeneratedCsv={exportGeneratedCsv}
+          allMonthsForSelected={allMonthsForSelected}
+          selectedPerson={selectedPerson}
+          S={S}
+        />
       </section>
     </div>
+  );
+}
+
+function ReportControls(props) {
+  const {
+    MONTHS, people, selMonth, setSelMonth, selYear, setSelYear,
+    personQuery, setPersonQuery, generatedRows, generatedFor,
+    generateMonthReport, exportGeneratedCsv, allMonthsForSelected, selectedPerson, S
+  } = props;
+
+  return (
+    <>
+      <div style={{ ...S.row, marginBottom: 8 }}>
+        <input
+          placeholder="Filter by person (type name or paste ID)…"
+          value={personQuery}
+          onChange={(e) => setPersonQuery(e.target.value)}
+          list="rovester-people"
+          style={{ ...S.input, minWidth: 260 }}
+        />
+        <datalist id="rovester-people">
+          {people.map(p => <option key={p.id} value={p.name} />)}
+          {people.map(p => <option key={p.id + "-id"} value={p.id} />)}
+        </datalist>
+
+        <select value={selMonth} onChange={(e)=>setSelMonth(Number(e.target.value))} style={S.input}>
+          {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+        </select>
+
+        <input
+          type="number"
+          value={selYear}
+          onChange={(e)=>setSelYear(Number(e.target.value))}
+          style={{ ...S.input, width: 110 }}
+        />
+
+        <button style={S.btn()} onClick={generateMonthReport}>Generate</button>
+        <button style={S.btn("outline")} onClick={exportGeneratedCsv} disabled={!generatedRows.length}>Export CSV</button>
+      </div>
+
+      {generatedRows.length ? (
+        <>
+          <div style={S.subtle}>
+            Generated for <b>{MONTHS[generatedFor.month]} {generatedFor.year}</b>
+            {generatedFor.person ? <> — Person: <b>{generatedFor.person}</b></> : null}
+          </div>
+          <table style={S.table}>
+            <thead>
+              <tr><th style={S.th}>Person</th><th style={S.th}>Kudos</th></tr>
+            </thead>
+            <tbody>
+              {generatedRows.map((r, idx) => (
+                <tr key={idx}>
+                  <td style={S.td}>{r.name}</td>
+                  <td style={S.td}>{r.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      ) : (
+        <div style={S.subtle}>Pick a month/year (and optionally a person) then click Generate.</div>
+      )}
+
+      {selectedPerson && (
+        <>
+          <div style={{ marginTop: 16, fontWeight: 600 }}>
+            All months for {selectedPerson.name}
+          </div>
+          <table style={S.table}>
+            <thead><tr><th style={S.th}>Month</th><th style={S.th}>Kudos</th></tr></thead>
+            <tbody>
+              {allMonthsForSelected.map(r => (
+                <tr key={r.month}><td style={S.td}>{r.month}</td><td style={S.td}>{r.kudos}</td></tr>
+              ))}
+            </tbody>
+          </table>
+        </>
+      )}
+    </>
   );
 }
