@@ -2,10 +2,48 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rove Kudos Wall</title>
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <title>Rovester Kudos Wall</title>
+    <meta name="description" content="Rovester Kudos — celebrate each other!" />
+    <style>
+      :root { color-scheme: light dark; }
+      body {
+        margin: 0;
+        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: #f8fafc;
+        color: #0f172a;
+      }
+      a { color: inherit; text-decoration: none; }
+      .container { max-width: 1120px; margin: 0 auto; padding: 16px; }
+      .nav {
+        position: sticky; top: 0; z-index: 10;
+        backdrop-filter: saturate(180%) blur(8px);
+        background: #ffffffcc; border-bottom: 1px solid #e5e7eb;
+      }
+      .nav-inner { display: flex; gap: 12px; align-items: center; height: 56px; }
+      .brand { font-weight: 700; font-size: 18px; }
+      .spacer { flex: 1; }
+      .btn {
+        padding: 10px 14px; border-radius: 12px; border: 1px solid #0f172a;
+        background: #0f172a; color: #fff; font-size: 14px;
+      }
+      .btn-outline {
+        padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1;
+        background: #fff; color: #0f172a; font-size: 14px;
+      }
+      .card {
+        background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
+        box-shadow: 0 1px 2px rgba(0,0,0,.04); overflow: hidden;
+      }
+      .card-head { padding: 16px; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
+      .card-body { padding: 16px; }
+      .muted { color: #64748b; }
+    </style>
   </head>
-  <body style="margin:0">
+  <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
   </body>
