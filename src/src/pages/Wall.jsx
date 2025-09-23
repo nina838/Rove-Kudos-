@@ -3,9 +3,13 @@ import React from "react";
 import KudosPanel from "../components/KudosPanel.jsx";
 
 export default function Wall() {
-  const currentUserId = "rovester-admin"; // your id
+  // For now, treat visitors as "guest" so they *don't* match your admin list.
+  const currentUserId = "guest";
 
-  // Example kudos data (replace with real data later)
+  // Only YOU go into allowedAdminIds. Replace "rovester-admin" with your own ID if you want.
+  const allowedAdmins = ["rovester-admin"];
+
+  // Example demo data
   const demoKudos = [
     { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
     { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
@@ -22,7 +26,7 @@ export default function Wall() {
           getRecipientName={(k) => k.toUserName}
           getCreatedAt={(k) => k.createdAt}
           currentUserId={currentUserId}
-          allowedAdminIds={["rovester-admin"]}
+          allowedAdminIds={allowedAdmins}
           onArchive={() => alert("Archive requested")}
           onDelete={() => alert("Delete requested")}
         />
@@ -30,3 +34,4 @@ export default function Wall() {
     </div>
   );
 }
+
