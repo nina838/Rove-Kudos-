@@ -3,10 +3,10 @@ import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx"; // only this import
 
-// --- Inline Wall page to avoid path issues ---
+// Inline Wall page to avoid path issues
 function Wall() {
-  const currentUserId = "guest";               // visitors are not admins
-  const allowedAdmins = ["rovester-admin"];    // only you can unlock
+  const currentUserId = "guest";
+  const allowedAdmins = ["rovester-admin"];
 
   const demoKudos = [
     { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
