@@ -34,4 +34,4 @@ export default function Wall() {
     </div>
   );
 }
-Temp rename Wall.jsx.
+
