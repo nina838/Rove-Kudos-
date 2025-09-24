@@ -1,7 +1,39 @@
 // src/App.jsx
 import React from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
-import Wall from "./pages/Wall.jsx";
+import KudosPanel from "./components/KudosPanel.jsx"; // NOTE: no import from ./pages/Wall.jsx anymore
+
+// Inline Wall page to avoid path issues
+function Wall() {
+  // treat visitors as non-admins
+  const currentUserId = "guest";
+  const allowedAdmins = ["rovester-admin"]; // only you can unlock
+
+  // demo data (swap with your real kudos later)
+  const demoKudos = [
+    { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
+    { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
+    { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" },
+  ];
+
+  return (
+    <div className="card">
+      <div className="card-head">Rovester Kudos Wall</div>
+      <div className="card-body">
+        <KudosPanel
+          kudos={demoKudos}
+          getRecipient={(k) => k.toUserId}
+          getRecipientName={(k) => k.toUserName}
+          getCreatedAt={(k) => k.createdAt}
+          currentUserId={currentUserId}
+          allowedAdminIds={allowedAdmins}
+          onArchive={() => alert("Archive requested")}
+          onDelete={() => alert("Delete requested")}
+        />
+      </div>
+    </div>
+  );
+}
 
 export default function App() {
   return (
@@ -19,7 +51,6 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/wall" element={<Wall />} />
-          {/* any unknown route -> wall */}
           <Route path="*" element={<Navigate to="/wall" replace />} />
         </Routes>
       </main>
@@ -33,17 +64,9 @@ function Home() {
       <div className="card-head">Welcome to Rovester</div>
       <div className="card-body">
         <p className="muted">
-          Celebrate teammates on the Rovester Kudos Wall. Click “Open Rovester Wall” to view,
-          unlock admin tools (passcode <b>12345</b>), and generate monthly reports.
+          Click “Open Rovester Wall” to use admin tools (passcode <b>12345</b>) and generate monthly reports.
         </p>
-        <ul>
-          <li>Admin actions are locked until you enter the passcode.</li>
-          <li>Generate a monthly report for any month &amp; year, optionally per person.</li>
-          <li>Export CSV for quick sharing.</li>
-        </ul>
-        <p>
-          <Link to="/wall" className="btn">Open Rovester Wall</Link>
-        </p>
+        <p><Link to="/wall" className="btn">Open Rovester Wall</Link></p>
       </div>
     </div>
   );
