@@ -236,4 +236,28 @@ export function MonthlyReport({
   .admin-only { display: none !important; }
   body[data-admin-unlocked="true"] .admin-only { display: inline-flex !important; }
 </style>
+import { AdminLock } from "../components/AddOns.jsx"; // path from your file
+
+// …
+
+<AdminLock
+  currentUserId={"guest" /* or your real user id if you have auth */}
+  allowedAdminIds={["rovester-admin" /* put YOUR id here */]}
+  passcode="12345"
+>
+  {/* Your existing admin UI goes here */}
+  <button onClick={onArchive}>Archive</button>
+  <button onClick={onDelete}>Delete</button>
+</AdminLock>
+import { MonthlyReport } from "../components/AddOns.jsx";
+
+// …
+
+<MonthlyReport
+  kudos={kudosArray} // your real kudos data
+  getRecipient={(k) => k.toUserId}        // adjust if needed
+  getRecipientName={(k) => k.toUserName}  // adjust if needed
+  getCreatedAt={(k) => k.createdAt}       // adjust if needed (string or Date)
+/>
+
 
