@@ -48,3 +48,7 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
+<style>
+  .admin-only { display: none !important; }
+  body[data-admin-unlocked="true"] .admin-only { display: inline-flex !important; }
+</style>
