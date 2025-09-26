@@ -3,9 +3,8 @@ import React, { useMemo, useState, useEffect } from "react";
 
 export default function KudosPanel({
   kudos,
-  getRecipient,
-  getRecipientName,
-  getCreatedAt,
+  getContent,     // now expects content accessor
+  getCreatedAt,   // ISO timestamp string
   currentUserId,
   allowedAdminIds = ["rovester-admin"],
   onArchive,
@@ -39,9 +38,11 @@ export default function KudosPanel({
     subtle: { color: RO.textSubtle, fontSize: 14 },
     card: { background: "#fff", borderRadius: 12, border: `1px solid ${RO.gray3}`, padding: 12, marginBottom: 8 },
     h3: { marginTop: 0, color: RO.blue },
+    message: { fontSize: 15, color: RO.slate, marginBottom: 6 },
+    timestamp: { fontSize: 13, color: RO.textSubtle }
   };
 
-  // Start locked
+  // Start locked (keep dataset usage in case admin flow re-added)
   useEffect(() => {
     document.body.dataset.adminUnlocked = "false";
     return () => { delete document.body.dataset.adminUnlocked; };
@@ -61,7 +62,6 @@ export default function KudosPanel({
     setPin("");
   }
 
-  // Kudos list
   const items = Array.isArray(kudos) ? kudos : [];
   const sorted = useMemo(
     () => items.slice().sort((a, b) => new Date(getCreatedAt(b)) - new Date(getCreatedAt(a))),
@@ -70,9 +70,9 @@ export default function KudosPanel({
 
   return (
     <div>
-      {/* (Kudos Tools section removed) */}
+      {/* (Kudos Tools UI intentionally left out) */}
 
-      {/* Passcode dialog */}
+      {/* Passcode dialog (kept in case you want admin tools later) */}
       {showPin && (
         <>
           <div onClick={() => setShowPin(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)" }} />
@@ -109,11 +109,11 @@ export default function KudosPanel({
         ) : (
           sorted.map(k => (
             <div key={k.id} style={S.card}>
-              <div style={{ color: RO.slate, fontWeight: 600 }}>
-                {getRecipientName?.(k) ?? getRecipient(k)}
+              <div style={S.message}>
+                {getContent?.(k) ?? ""}
               </div>
-              <div style={{ fontSize: 13, color: RO.textSubtle }}>
-                {new Date(getCreatedAt(k)).toDateString()}
+              <div style={S.timestamp}>
+                {new Date(getCreatedAt(k)).toLocaleString()}
               </div>
             </div>
           ))
