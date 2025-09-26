@@ -16,10 +16,10 @@ const S = {
 
 function Wall() {
   const currentUserId = "guest";
-  const allowedAdmins = ["rovester-admin"]; // add your id if you want to see Unlock
+  const allowedAdmins = ["rovester-"]; // add your id if you want to see Unlock
 
   const [kudos, setKudos] = useState([
-    { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
+    { id: 1, toUserId: "rovester-", toUserName: "Rovester ", createdAt: "2025-01-05" },
     { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
     { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" },
   ]);
