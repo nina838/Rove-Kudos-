@@ -3,9 +3,6 @@ import React, { useState } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx";
 
-/* =========================
-   Simple Rove-style helpers
-   ========================= */
 const S = {
   page: { paddingTop: 16 },
   card: { background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.06)", border: "1px solid #e2e8f0" },
@@ -16,26 +13,20 @@ const S = {
   badge: { padding: "4px 10px", borderRadius: 999, fontSize: 12, background: "#f0f9ff", color: "#0369a1", border: "1px solid #bae6fd" },
 };
 
-/* =========================
-   Wall page (default route)
-   ========================= */
 function Wall() {
-  // If you have real auth/user IDs, replace "guest" and add your ID in allowedAdmins
   const currentUserId = "guest";
-  const allowedAdmins = ["rovester-admin"]; // <-- put YOUR id here so only you can unlock
+  const allowedAdmins = ["rovester-admin"]; // put YOUR id here if you have one
 
-  // Demo kudos. If you already load kudos from your backend, replace this state with your data.
   const [kudos, setKudos] = useState([
     { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
     { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
     { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" },
   ]);
 
-  // Write-a-kudos form (keep it light; match fields used by KudosPanel)
   const [toUserId, setToUserId] = useState("");
   const [toUserName, setToUserName] = useState("");
 
-  // Open hours guard (local time 09:00–21:00)
+  // Open 09:00–21:00 (local browser time)
   const hour = new Date().getHours();
   const isOpen = hour >= 9 && hour < 21;
 
@@ -45,7 +36,7 @@ function Wall() {
       alert("Please fill both: Person ID and Person Name.");
       return;
     }
-    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    const today = new Date().toISOString().slice(0, 10);
     setKudos(prev => [
       ...prev,
       {
@@ -61,7 +52,6 @@ function Wall() {
 
   return (
     <>
-      {/* Header */}
       <div style={{ ...S.card, marginBottom: 16 }}>
         <div style={S.head}>Rovester Kudos</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", color: "#475569" }}>
@@ -70,7 +60,6 @@ function Wall() {
         </div>
       </div>
 
-      {/* Write Kudos (visible only during open hours) */}
       <div style={{ ...S.card, marginBottom: 16 }}>
         <div style={S.head}>Write a Kudos</div>
         {isOpen ? (
@@ -101,7 +90,6 @@ function Wall() {
         )}
       </div>
 
-      {/* Kudos Wall + Admin lock + Monthly Report are inside KudosPanel.jsx */}
       <div style={S.card}>
         <div style={S.head}>Kudos Wall</div>
         <KudosPanel
@@ -119,9 +107,6 @@ function Wall() {
   );
 }
 
-/* =========================
-   App shell + routes
-   ========================= */
 export default function App() {
   return (
     <>
@@ -135,7 +120,6 @@ export default function App() {
 
       <main className="container" style={S.page}>
         <Routes>
-          {/* Make Wall the homepage */}
           <Route path="/" element={<Wall />} />
           <Route path="/wall" element={<Wall />} />
           <Route path="*" element={<Navigate to="/wall" replace />} />
