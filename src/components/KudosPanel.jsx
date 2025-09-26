@@ -13,12 +13,11 @@ export default function KudosPanel({
 }) {
   const PASSCODE = "12345";
 
-  // --- Rove theme (adjust if you have exact brand codes) ---
+  // Brand colors (optional: set in :root vars via index.css)
   const RO = {
-    blue: "var(--rove-blue, #003da5)",     // primary
-    green: "var(--rove-green, #00a859)",   // accent
+    blue: "var(--rove-blue, #003da5)",
+    green: "var(--rove-green, #00a859)",
     slate: "#0f172a",
-    gray1: "#f8fafc",
     gray2: "#f1f5f9",
     gray3: "#e2e8f0",
     textSubtle: "#64748b",
@@ -30,14 +29,7 @@ export default function KudosPanel({
     row: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
     input: { padding: "10px 12px", borderRadius: 12, border: `1px solid ${RO.gray3}`, background: "#fff" },
     btn: (v) => {
-      const base = {
-        padding: "10px 14px",
-        borderRadius: 12,
-        border: "1px solid",
-        cursor: "pointer",
-        fontSize: 14,
-        whiteSpace: "nowrap",
-      };
+      const base = { padding: "10px 14px", borderRadius: 12, border: "1px solid", cursor: "pointer", fontSize: 14, whiteSpace: "nowrap" };
       if (v === "danger") return { ...base, background: RO.red, color: "#fff", borderColor: RO.red };
       if (v === "secondary") return { ...base, background: RO.gray2, color: RO.slate, borderColor: RO.gray3 };
       if (v === "outline") return { ...base, background: "#fff", color: RO.slate, borderColor: RO.gray3 };
@@ -45,14 +37,11 @@ export default function KudosPanel({
       return { ...base, background: RO.blue, color: "#fff", borderColor: RO.blue };
     },
     subtle: { color: RO.textSubtle, fontSize: 14 },
-    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 8, background: "#fff", borderRadius: 12, overflow: "hidden" },
-    th: { textAlign: "left", borderBottom: `1px solid ${RO.gray3}`, padding: "10px 12px", background: RO.gray2 },
-    td: { borderBottom: `1px solid ${RO.gray2}`, padding: "10px 12px" },
     card: { background: "#fff", borderRadius: 12, border: `1px solid ${RO.gray3}`, padding: 12, marginBottom: 8 },
     h3: { marginTop: 0, color: RO.blue },
   };
 
-  // ensure page starts locked
+  // Start locked
   useEffect(() => {
     document.body.dataset.adminUnlocked = "false";
     return () => { delete document.body.dataset.adminUnlocked; };
@@ -72,70 +61,18 @@ export default function KudosPanel({
     setPin("");
   }
 
-  // ---------- Render kudos list ----------
+  // Kudos list
   const items = Array.isArray(kudos) ? kudos : [];
   const sorted = useMemo(
     () => items.slice().sort((a, b) => new Date(getCreatedAt(b)) - new Date(getCreatedAt(a))),
     [items, getCreatedAt]
   );
 
-  // ---------- Monthly report ----------
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-  const [personQuery, setPersonQuery] = useState("");
-  const people = useMemo(() => {
-    const m = new Map();
-    for (const k of items) {
-      const id = getRecipient(k);
-      if (id == null) continue;
-      const name = getRecipientName?.(k) ?? String(id);
-      if (!m.has(id)) m.set(id, name);
-    }
-    return Array.from(m, ([id, name]) => ({ id: String(id), name }));
-  }, [items, getRecipient, getRecipientName]);
-
-  const selectedPerson = useMemo(() => {
-    if (!personQuery) return null;
-    const exact = people.find(p => String(p.id) === personQuery.trim());
-    if (exact) return exact;
-    const q = personQuery.trim().toLowerCase();
-    return people.find(p => p.name.toLowerCase().includes(q)) || null;
-  }, [people, personQuery]);
-
-  const now = new Date();
-  const [selMonth, setSelMonth] = useState(now.getMonth());
-  const [selYear, setSelYear] = useState(now.getFullYear());
-  const [generatedRows, setGeneratedRows] = useState([]);
-  const [generatedFor, setGeneratedFor] = useState({ month: selMonth, year: selYear, person: null });
-
-  function withinSelectedMonth(dt) {
-    return dt.getMonth() === Number(selMonth) && dt.getFullYear() === Number(selYear);
-  }
-
-  function generateMonthReport() {
-    const rows = new Map();
-    (items || []).forEach(k => {
-      const dt = new Date(getCreatedAt(k));
-      if (isNaN(dt)) return;
-      if (!withinSelectedMonth(dt)) return;
-
-      const pid = String(getRecipient(k));
-      const pname = getRecipientName?.(k) ?? pid;
-      if (selectedPerson && pid !== selectedPerson.id) return;
-
-      if (!rows.has(pid)) rows.set(pid, { name: pname, count: 0 });
-      rows.get(pid).count++;
-    });
-
-    const arr = Array.from(rows.values()).sort((a, b) => b.count - a.count);
-    setGeneratedRows(arr);
-    setGeneratedFor({ month: selMonth, year: selYear, person: selectedPerson?.name || null });
-  }
-
   return (
     <div>
-      {/* Unlock / Tools */}
+      {/* Kudos Tools (locked) */}
       <section style={S.section}>
-        <h3 style={S.h3}>Kudos Wall Tools</h3>
+        <h3 style={S.h3}>Kudos Tools</h3>
 
         {!canSeeUnlock && (
           <p style={S.subtle}>You don’t have access to Kudos tools.</p>
@@ -205,56 +142,6 @@ export default function KudosPanel({
               </div>
             </div>
           ))
-        )}
-      </section>
-
-      {/* Monthly Report */}
-      <section style={S.section}>
-        <h3 style={S.h3}>Monthly Kudos Report</h3>
-
-        <div style={{ ...S.row, marginBottom: 8 }}>
-          <input
-            placeholder="Filter by person (type name or paste ID)…"
-            value={personQuery}
-            onChange={(e) => setPersonQuery(e.target.value)}
-            list="rovester-people"
-            style={{ ...S.input, minWidth: 260 }}
-          />
-          <datalist id="rovester-people">
-            {people.map(p => <option key={p.id} value={p.name} />)}
-            {people.map(p => <option key={p.id + "-id"} value={p.id} />)}
-          </datalist>
-
-          <select value={selMonth} onChange={(e)=>setSelMonth(Number(e.target.value))} style={S.input}>
-            {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
-          </select>
-
-          <input
-            type="number"
-            value={selYear}
-            onChange={(e)=>setSelYear(Number(e.target.value))}
-            style={{ ...S.input, width: 120 }}
-          />
-
-          <button style={S.btn()} onClick={generateMonthReport}>Generate</button>
-        </div>
-
-        {generatedRows.length ? (
-          <table style={S.table}>
-            <thead>
-              <tr><th style={S.th}>Person</th><th style={S.th}>Kudos</th></tr>
-            </thead>
-            <tbody>
-              {generatedRows.map((r, idx) => (
-                <tr key={idx}>
-                  <td style={S.td}>{r.name}</td>
-                  <td style={S.td}>{r.count}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        ) : (
-          <div style={S.subtle}>Pick a month/year (and optionally a person) then click Generate.</div>
         )}
       </section>
     </div>
