@@ -4,76 +4,80 @@ import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx";
 import Reports from "./pages/Reports.jsx";
 
-const RO = {
-  blue: "#003da5",      // primary blue accent
-  green: "#00a859",     // rove brand green (primary action)
-  slate: "#0f172a",
-  gray1: "#f8fafc",
-  gray2: "#f1f5f9",
-  gray3: "#e6edf3",
-  subtle: "#64748b",
+const THEME = {
+  lightBlue: "#e8f2ff",   // very light blue background / card tint
+  blue: "#2b7bd3",        // primary blue accent
+  turquoise: "#2bcab3",   // turquoise / primary action
+  slate: "#0f172a",       // dark slate text
+  graySoft: "#f6f8fb",    // pale grey page bg
+  grayMid: "#dfe8ef",     // card border / soft element
+  textMuted: "#6b7280",   // muted grey text
 };
 
 const S = {
-  page: { paddingTop: 20 },
+  page: { paddingTop: 22 },
   headerCard: {
-    background: "linear-gradient(90deg, rgba(0,61,165,0.04), rgba(0,168,89,0.03))",
+    background: `linear-gradient(90deg, ${THEME.lightBlue}, rgba(43,123,211,0.03))`,
     borderRadius: 18,
-    padding: 22,
-    boxShadow: "0 8px 30px rgba(15,23,42,0.04)",
-    border: `1px solid ${RO.gray3}`,
-    marginBottom: 18,
+    padding: 24,
+    boxShadow: "0 12px 40px rgba(15,23,42,0.04)",
+    border: `1px solid ${THEME.grayMid}`,
+    marginBottom: 20,
   },
-  title: { fontWeight: 800, fontSize: 30, color: RO.slate, marginBottom: 6 },
-  tagline: { color: RO.subtle, fontSize: 15, display: "flex", gap: 10, alignItems: "center" },
+  title: { fontWeight: 800, fontSize: 32, color: THEME.slate, marginBottom: 8 },
+  taglineRow: { display: "flex", gap: 12, alignItems: "center", color: THEME.textMuted },
   badge: {
     display: "inline-flex",
     alignItems: "center",
     gap: 8,
-    padding: "6px 12px",
+    padding: "6px 14px",
     borderRadius: 999,
-    background: "#f0f9f4",
-    color: RO.green,
-    border: `1px solid rgba(0,168,89,0.12)`,
-    fontWeight: 600,
-    fontSize: 13
+    background: "#ffffff",
+    color: THEME.blue,
+    border: `1px solid rgba(43,123,211,0.08)`,
+    fontWeight: 700,
+    fontSize: 13,
+    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)"
   },
 
   card: {
     background: "#fff",
-    borderRadius: 18,
+    borderRadius: 16,
     padding: 20,
-    boxShadow: "0 10px 30px rgba(15,23,42,0.04)",
-    border: `1px solid ${RO.gray3}`,
+    boxShadow: "0 10px 30px rgba(15,23,42,0.03)",
+    border: `1px solid ${THEME.grayMid}`,
     marginBottom: 18,
   },
 
-  formRow: { display: "flex", gap: 12, alignItems: "flex-start", flexWrap: "wrap" },
+  formRow: { display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" },
   textarea: {
     padding: 14,
     borderRadius: 14,
-    border: `1px solid ${RO.gray3}`,
-    minWidth: 420,
-    minHeight: 90,
+    border: `1px solid ${THEME.grayMid}`,
+    minWidth: 440,
+    minHeight: 100,
     resize: "vertical",
     fontSize: 15,
-    color: RO.slate,
+    color: THEME.slate,
+    background: "#fcfeff",
     boxShadow: "inset 0 1px 0 rgba(16,24,40,0.02)"
   },
   btn: {
-    padding: "12px 18px",
+    padding: "12px 20px",
     borderRadius: 14,
     border: "1px solid transparent",
-    background: RO.green,
+    background: THEME.turquoise,
     color: "#fff",
     cursor: "pointer",
-    fontWeight: 700,
+    fontWeight: 800,
     fontSize: 15,
-    boxShadow: "0 6px 18px rgba(0,168,89,0.14)"
+    boxShadow: "0 8px 22px rgba(43,123,211,0.08)"
   },
-  smallNote: { color: RO.subtle, fontSize: 13, marginTop: 10 },
+  smallNote: { color: THEME.textMuted, fontSize: 13, marginTop: 10 },
 
-  wallHead: { fontWeight: 700, fontSize: 20, marginBottom: 12, color: RO.slate },
+  wallHead: { fontWeight: 800, fontSize: 20, marginBottom: 12, color: THEME.slate },
+  navBrand: { fontWeight: 800, color: THEME.slate },
+  navBtn: { background: "transparent", color: THEME.blue, borderRadius: 12, padding: "8px 12px", border: `1px solid rgba(43,123,211,0.08)` }
 };
 
 function Wall() {
@@ -97,15 +101,15 @@ function Wall() {
     if (!text) { alert("Please write your kudos before submitting."); return; }
     const now = new Date().toISOString();
     setKudos(prev => [
-      ...prev,
       {
         id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
         content: text,
         createdAt: now,
-      }
+      },
+      ...prev,
     ]);
     setKudosText("");
-    // small UX: scroll to top of wall (optional)
+    // scroll to wall top
     const wall = document.getElementById("kudos-wall");
     if (wall) wall.scrollIntoView({ behavior: "smooth", block: "start" });
   }
@@ -114,32 +118,34 @@ function Wall() {
     <>
       <div style={S.headerCard}>
         <div style={S.title}>Kudos Live Wall</div>
-        <div style={S.tagline}>
+        <div style={S.taglineRow}>
           <div style={S.badge}>Rove</div>
-          <div>Write your kudos and it will appear live on the wall with date &amp; time.</div>
+          <div style={{ color: THEME.textMuted }}>
+            Share quick kudos — they publish instantly with a timestamp. Light, calm, and elegant.
+          </div>
         </div>
       </div>
 
       <div style={S.card}>
-        <div style={{ fontWeight: 800, fontSize: 20, color: RO.slate, marginBottom: 12 }}>Write a Kudos</div>
+        <div style={{ fontWeight: 800, fontSize: 20, color: THEME.slate, marginBottom: 12 }}>Write a Kudos</div>
 
         {isOpen ? (
           <>
             <form onSubmit={addKudos} style={S.formRow}>
               <textarea
                 style={S.textarea}
-                placeholder="Write your kudos... (be specific — mention names or wins)"
+                placeholder="Write your kudos... (e.g., 'Thanks Sam for pairing on the fix — shipping faster because of you')"
                 value={kudosText}
                 onChange={(e) => setKudosText(e.target.value)}
               />
               <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
                 <button style={S.btn} type="submit">Add Kudos</button>
-                <div style={S.smallNote}>Your kudos publishes immediately to the wall with a timestamp.</div>
+                <div style={S.smallNote}>Publishes immediately to the wall with local date &amp; time.</div>
               </div>
             </form>
           </>
         ) : (
-          <div style={{ color: RO.subtle }}>Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.</div>
+          <div style={{ color: THEME.textMuted }}>Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.</div>
         )}
       </div>
 
@@ -162,11 +168,11 @@ function Wall() {
 export default function App() {
   return (
     <>
-      <nav className="nav" style={{ background: "#ffffffcc", borderBottom: "1px solid #eef2f7" }}>
+      <nav className="nav" style={{ background: "#ffffffcc", borderBottom: "1px solid rgba(43,123,211,0.06)" }}>
         <div className="container nav-inner">
-          <div className="brand" style={{ fontWeight: 800, color: RO.slate }}>Rovester Kudos</div>
+          <div className="brand" style={S.navBrand}>Rovester Kudos</div>
           <div className="spacer" />
-          <Link to="/wall" className="btn" style={{ background: RO.green, color: "#fff", borderRadius: 12, padding: "8px 12px" }}>Wall</Link>
+          <Link to="/wall" className="btn" style={{ ...S.navBtn, background: "transparent", color: THEME.blue }}>Wall</Link>
           <Link to="/reports" className="btn-outline" style={{ marginLeft: 8 }}>Reports</Link>
         </div>
       </nav>
