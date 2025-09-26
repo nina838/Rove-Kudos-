@@ -9,47 +9,51 @@ const S = {
   card: { background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.06)", border: "1px solid #e2e8f0" },
   head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#0f172a" },
   row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
-  input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #d1d5db", minWidth: 200 },
+  textarea: { padding: "12px", borderRadius: 12, border: "1px solid #d1d5db", minWidth: 400, minHeight: 80, resize: "vertical" },
   btn: { padding: "10px 16px", borderRadius: 12, border: "1px solid #00a859", background: "#00a859", color: "#fff", cursor: "pointer" },
   badge: { padding: "4px 10px", borderRadius: 999, fontSize: 12, background: "#f0f9ff", color: "#0369a1", border: "1px solid #bae6fd" },
+  subtleText: { color: "#64748b", fontSize: 13, marginTop: 8 }
 };
 
 function Wall() {
   const currentUserId = "guest";
-  const allowedAdmins = ["rovester-"]; // add your id if you want to see Unlock
+  const allowedAdmins = ["rovester-"]; // left as-is
 
+  // kudos items now store content and createdAt (ISO string)
   const [kudos, setKudos] = useState([
-    { id: 1, toUserId: "rovester-", toUserName: "Rovester ", createdAt: "2025-01-05" },
-    { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
-    { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" },
+    { id: 1, content: "Shoutout to the team for great Q1 delivery!", createdAt: "2025-01-05T10:30:00" },
+    { id: 2, content: "Alice helped unblock the release — awesome work!", createdAt: "2025-02-11T14:12:00" },
+    { id: 3, content: "Bob's design improvements look great.", createdAt: "2025-02-19T09:45:00" },
   ]);
 
-  const [toUserId, setToUserId] = useState("");
-  const [toUserName, setToUserName] = useState("");
+  const [kudosText, setKudosText] = useState("");
 
   const hour = new Date().getHours(); // 09:00–21:00 open
   const isOpen = hour >= 9 && hour < 21;
 
   function addKudos(e) {
     e.preventDefault();
-    if (!toUserId.trim() || !toUserName.trim()) { alert("Please fill both: Person ID and Person Name."); return; }
-    const today = new Date().toISOString().slice(0, 10);
-    setKudos(prev => [...prev, {
-      id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
-      toUserId: toUserId.trim(),
-      toUserName: toUserName.trim(),
-      createdAt: today,
-    }]);
-    setToUserId(""); setToUserName("");
+    const text = (kudosText || "").trim();
+    if (!text) { alert("Please write your kudos before submitting."); return; }
+    const now = new Date().toISOString();
+    setKudos(prev => [
+      ...prev,
+      {
+        id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
+        content: text,
+        createdAt: now,
+      }
+    ]);
+    setKudosText("");
   }
 
   return (
     <>
       <div style={{ ...S.card, marginBottom: 16 }}>
-        <div style={S.head}>Rovester Kudos</div>
+        <div style={{ fontWeight: 800, fontSize: 28, marginBottom: 4 }}>Kudos Live Wall</div>
         <div style={{ display: "flex", gap: 8, alignItems: "center", color: "#475569" }}>
           <span style={S.badge}>Rove theme</span>
-          <span>Write kudos for teammates. Tools are locked by passcode.</span>
+          <span>Write your kudos and it will appear live on the wall with date &amp; time.</span>
         </div>
       </div>
 
@@ -58,16 +62,20 @@ function Wall() {
         {isOpen ? (
           <>
             <form onSubmit={addKudos} style={{ ...S.row }}>
-              <input style={S.input} placeholder="Person ID (e.g., alice123)" value={toUserId} onChange={(e) => setToUserId(e.target.value)} />
-              <input style={S.input} placeholder="Person Name (e.g., Alice)" value={toUserName} onChange={(e) => setToUserName(e.target.value)} />
+              <textarea
+                style={S.textarea}
+                placeholder="Write your kudos..."
+                value={kudosText}
+                onChange={(e) => setKudosText(e.target.value)}
+              />
               <button style={S.btn} type="submit">Add Kudos</button>
             </form>
-            <div style={{ color: "#64748b", marginTop: 8, fontSize: 13 }}>
-              The entry uses <b>ID</b>, <b>Name</b>, and today’s <b>date</b>.
+            <div style={S.subtleText}>
+              Your kudos will appear immediately on the wall with the current date &amp; time.
             </div>
           </>
         ) : (
-          <div style={{ color: "#64748b" }}>Rovester Kudos is closed now. Open daily <b>09:00–21:00</b>.</div>
+          <div style={{ color: "#64748b" }}>Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.</div>
         )}
       </div>
 
@@ -75,8 +83,7 @@ function Wall() {
         <div style={S.head}>Kudos Wall</div>
         <KudosPanel
           kudos={kudos}
-          getRecipient={(k) => k.toUserId}
-          getRecipientName={(k) => k.toUserName}
+          getContent={(k) => k.content}
           getCreatedAt={(k) => k.createdAt}
           currentUserId={currentUserId}
           allowedAdminIds={allowedAdmins}
@@ -107,10 +114,9 @@ export default function App() {
           <Route path="/reports" element={
             <Reports
               kudos={[
-                // pass the same or real kudos array from a store/api if you have one
-                { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
-                { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
-                { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" },
+                { id: 1, content: "Rovester Admin kickoff", createdAt: "2025-01-05T10:30:00" },
+                { id: 2, content: "Alice did great work", createdAt: "2025-02-11T14:12:00" },
+                { id: 3, content: "Bob's help was invaluable", createdAt: "2025-02-19T09:45:00" },
               ]}
               getRecipient={(k) => k.toUserId}
               getRecipientName={(k) => k.toUserName}
