@@ -99,16 +99,4 @@ export default function Reports({ kudos, getRecipient, getRecipientName, getCrea
     </div>
   );
 }
-// src/App.jsx
-import React, { useState } from "react";
-import { Routes, Route, Link, Navigate } from "react-router-dom";
-import KudosPanel from "./components/KudosPanel.jsx";
-import Reports from "./pages/Reports.jsx";
-
-const S = {
-  page: { paddingTop: 16 },
-  card: { background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.06)", border: "1px solid #e2e8f0" },
-  head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#0f172a" },
-  row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
-  input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #d1d5db
 
