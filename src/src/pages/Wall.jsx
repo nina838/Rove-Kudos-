@@ -6,12 +6,12 @@ export default function Wall() {
   // For now, treat visitors as "guest" so they *don't* match your admin list.
   const currentUserId = "guest";
 
-  // Only YOU go into allowedAdminIds. Replace "rovester-admin" with your own ID if you want.
-  const allowedAdmins = ["rovester-admin"];
+  // Only YOU go into allowedAdminIds. Replace "rovester" with your own ID if you want.
+  const allowedAdmins = ["rovester"];
 
   // Example demo data
   const demoKudos = [
-    { id: 1, toUserId: "rovester-admin", toUserName: "Rovester Admin", createdAt: "2025-01-05" },
+    { id: 1, toUserId: "rovester", toUserName: "Rovester ", createdAt: "2025-01-05" },
     { id: 2, toUserId: "alice",          toUserName: "Alice",          createdAt: "2025-02-11" },
     { id: 3, toUserId: "bob",            toUserName: "Bob",            createdAt: "2025-02-19" }
   ];
