@@ -70,32 +70,7 @@ export default function KudosPanel({
 
   return (
     <div>
-      {/* Kudos Tools (locked) */}
-      <section style={S.section}>
-        <h3 style={S.h3}>Kudos Tools</h3>
-
-        {!canSeeUnlock && (
-          <p style={S.subtle}>You don’t have access to Kudos tools.</p>
-        )}
-
-        {canSeeUnlock && !unlocked && (
-          <button
-            className="admin-only"
-            style={S.btn("green")}
-            onClick={() => { setPin(""); setPinErr(""); setShowPin(true); }}
-          >
-            Unlock Tools
-          </button>
-        )}
-
-        {canSeeUnlock && unlocked && (
-          <div className="admin-only" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-            <button style={S.btn("secondary")} onClick={() => onArchive?.()}>Archive</button>
-            <button style={S.btn("danger")} onClick={() => onDelete?.()}>Delete</button>
-            <span style={S.subtle}>Tools unlocked.</span>
-          </div>
-        )}
-      </section>
+      {/* (Kudos Tools section removed) */}
 
       {/* Passcode dialog */}
       {showPin && (
