@@ -1,0 +1,21 @@
+:root {
+  /* Replace with your official Rove brand colors if you have them */
+  --rove-blue: #003da5;
+  --rove-green: #00a859;
+}
+
+.nav {
+  background: var(--rove-blue);
+  color: #fff;
+}
+
+.btn, .btn-outline {
+  background: var(--rove-green);
+  color: #fff;
+  border: none;
+}
+
+body {
+  font-family: system-ui, sans-serif;
+  background: #f8fafc;
+}
