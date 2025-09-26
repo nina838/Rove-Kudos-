@@ -13,22 +13,43 @@ export default function KudosPanel({
 }) {
   const PASSCODE = "12345";
 
+  // --- Rove theme (adjust if you have exact brand codes) ---
+  const RO = {
+    blue: "var(--rove-blue, #003da5)",     // primary
+    green: "var(--rove-green, #00a859)",   // accent
+    slate: "#0f172a",
+    gray1: "#f8fafc",
+    gray2: "#f1f5f9",
+    gray3: "#e2e8f0",
+    textSubtle: "#64748b",
+    red: "#dc2626",
+  };
+
   const S = {
     section: { marginBottom: 16 },
     row: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
-    input: { padding: "10px 12px", borderRadius: 10, border: "1px solid #d1d5db" },
+    input: { padding: "10px 12px", borderRadius: 12, border: `1px solid ${RO.gray3}`, background: "#fff" },
     btn: (v) => {
-      const b = { padding: "10px 14px", borderRadius: 12, border: "1px solid", cursor: "pointer", fontSize: 14, whiteSpace: "nowrap" };
-      if (v === "danger") return { ...b, background: "#dc2626", color: "#fff", borderColor: "#dc2626" };
-      if (v === "secondary") return { ...b, background: "#f3f4f6", color: "#111827", borderColor: "#e5e7eb" };
-      if (v === "outline") return { ...b, background: "#fff", color: "#0f172a", borderColor: "#cbd5e1" };
-      return { ...b, background: "#0f172a", color: "#fff", borderColor: "#0f172a" };
+      const base = {
+        padding: "10px 14px",
+        borderRadius: 12,
+        border: "1px solid",
+        cursor: "pointer",
+        fontSize: 14,
+        whiteSpace: "nowrap",
+      };
+      if (v === "danger") return { ...base, background: RO.red, color: "#fff", borderColor: RO.red };
+      if (v === "secondary") return { ...base, background: RO.gray2, color: RO.slate, borderColor: RO.gray3 };
+      if (v === "outline") return { ...base, background: "#fff", color: RO.slate, borderColor: RO.gray3 };
+      if (v === "green") return { ...base, background: RO.green, color: "#fff", borderColor: RO.green };
+      return { ...base, background: RO.blue, color: "#fff", borderColor: RO.blue };
     },
-    subtle: { color: "#64748b", fontSize: 14 },
-    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 8 },
-    th: { textAlign: "left", borderBottom: "1px solid #e5e7eb", padding: "8px 12px" },
-    td: { borderBottom: "1px solid #f3f4f6", padding: "8px 12px" },
-    card: { background: "#fff", borderRadius: 12, border: "1px solid #e5e7eb", padding: 12, marginBottom: 8 }
+    subtle: { color: RO.textSubtle, fontSize: 14 },
+    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 8, background: "#fff", borderRadius: 12, overflow: "hidden" },
+    th: { textAlign: "left", borderBottom: `1px solid ${RO.gray3}`, padding: "10px 12px", background: RO.gray2 },
+    td: { borderBottom: `1px solid ${RO.gray2}`, padding: "10px 12px" },
+    card: { background: "#fff", borderRadius: 12, border: `1px solid ${RO.gray3}`, padding: 12, marginBottom: 8 },
+    h3: { marginTop: 0, color: RO.blue },
   };
 
   // ensure page starts locked
@@ -112,17 +133,21 @@ export default function KudosPanel({
 
   return (
     <div>
-      {/* Unlock / Admin controls */}
+      {/* Unlock / Tools */}
       <section style={S.section}>
-        <h3 style={{ marginTop: 0 }}>Admin</h3>
+        <h3 style={S.h3}>Kudos Wall Tools</h3>
 
         {!canSeeUnlock && (
-          <p style={S.subtle}>You don’t have access to Rovester admin tools.</p>
+          <p style={S.subtle}>You don’t have access to Kudos tools.</p>
         )}
 
         {canSeeUnlock && !unlocked && (
-          <button className="admin-only" style={S.btn("outline")} onClick={() => { setPin(""); setPinErr(""); setShowPin(true); }}>
-            Unlock admin (passcode required)
+          <button
+            className="admin-only"
+            style={S.btn("green")}
+            onClick={() => { setPin(""); setPinErr(""); setShowPin(true); }}
+          >
+            Unlock Tools
           </button>
         )}
 
@@ -130,12 +155,12 @@ export default function KudosPanel({
           <div className="admin-only" style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
             <button style={S.btn("secondary")} onClick={() => onArchive?.()}>Archive</button>
             <button style={S.btn("danger")} onClick={() => onDelete?.()}>Delete</button>
-            <span style={S.subtle}>Unlocked with passcode.</span>
+            <span style={S.subtle}>Tools unlocked.</span>
           </div>
         )}
       </section>
 
-      {/* PIN dialog */}
+      {/* Passcode dialog */}
       {showPin && (
         <>
           <div onClick={() => setShowPin(false)} style={{ position: "fixed", inset: 0, background: "rgba(0,0,0,.4)" }} />
@@ -143,11 +168,11 @@ export default function KudosPanel({
             style={{
               position: "fixed", left: "50%", top: "50%", transform: "translate(-50%,-50%)",
               background: "#fff", width: "100%", maxWidth: 420, padding: 16, borderRadius: 16,
-              boxShadow: "0 10px 30px rgba(0,0,0,.15)"
+              boxShadow: "0 10px 30px rgba(0,0,0,.15)", border: `1px solid ${RO.gray3}`
             }}
           >
-            <h3 style={{ marginTop: 0 }}>Enter Rovester admin passcode</h3>
-            <p style={S.subtle}>Only users with the passcode can use admin actions.</p>
+            <h3 style={{ marginTop: 0, color: RO.blue }}>Enter passcode</h3>
+            <p style={S.subtle}>Only users with the passcode can use these tools.</p>
             <input
               type="password"
               placeholder="Passcode"
@@ -155,7 +180,7 @@ export default function KudosPanel({
               onChange={(e) => { setPin(e.target.value); setPinErr(""); }}
               style={{ ...S.input, width: "100%" }}
             />
-            {pinErr && <div style={{ color: "#b91c1c", fontSize: 13, marginTop: 6 }}>{pinErr}</div>}
+            {pinErr && <div style={{ color: RO.red, fontSize: 13, marginTop: 6 }}>{pinErr}</div>}
             <div style={{ display: "flex", justifyContent: "flex-end", gap: 8, marginTop: 12 }}>
               <button style={S.btn("outline")} onClick={() => setShowPin(false)}>Cancel</button>
               <button style={S.btn()} onClick={handleConfirmPin}>Confirm</button>
@@ -166,14 +191,18 @@ export default function KudosPanel({
 
       {/* Kudos list */}
       <section style={S.section}>
-        <h3 style={{ marginTop: 0 }}>Recent Kudos</h3>
+        <h3 style={S.h3}>Recent Kudos</h3>
         {sorted.length === 0 ? (
           <div style={S.subtle}>No kudos yet. Add some above.</div>
         ) : (
           sorted.map(k => (
             <div key={k.id} style={S.card}>
-              <div><b>{getRecipientName?.(k) ?? getRecipient(k)}</b></div>
-              <div style={{ fontSize: 13, color: "#64748b" }}>{new Date(getCreatedAt(k)).toDateString()}</div>
+              <div style={{ color: RO.slate, fontWeight: 600 }}>
+                {getRecipientName?.(k) ?? getRecipient(k)}
+              </div>
+              <div style={{ fontSize: 13, color: RO.textSubtle }}>
+                {new Date(getCreatedAt(k)).toDateString()}
+              </div>
             </div>
           ))
         )}
@@ -181,7 +210,7 @@ export default function KudosPanel({
 
       {/* Monthly Report */}
       <section style={S.section}>
-        <h3 style={{ marginTop: 0 }}>Rovester Monthly Kudos Report</h3>
+        <h3 style={S.h3}>Monthly Kudos Report</h3>
 
         <div style={{ ...S.row, marginBottom: 8 }}>
           <input
@@ -204,7 +233,7 @@ export default function KudosPanel({
             type="number"
             value={selYear}
             onChange={(e)=>setSelYear(Number(e.target.value))}
-            style={{ ...S.input, width: 110 }}
+            style={{ ...S.input, width: 120 }}
           />
 
           <button style={S.btn()} onClick={generateMonthReport}>Generate</button>
