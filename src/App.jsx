@@ -2,59 +2,75 @@
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx";
+import Reports from "./pages/Reports.jsx";
 
 const S = {
   page: { paddingTop: 16 },
   card: { background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.06)", border: "1px solid #e2e8f0" },
   head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#0f172a" },
   row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
-  input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #d1d5db", minWidth: 200 },
+  input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #d1d5db", minWidth: 260 },
   btn: { padding: "10px 16px", borderRadius: 12, border: "1px solid #00a859", background: "#00a859", color: "#fff", cursor: "pointer" },
 };
 
 function Wall() {
-  const currentUserId = "guest";
+  // hydrate from localStorage so Reports can see today's data too
+  const [kudos, setKudos] = useState(() => {
+    try {
+      const raw = localStorage.getItem("kudos");
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  });
 
-  const [kudos, setKudos] = useState([]);
   const [message, setMessage] = useState("");
-
   const hour = new Date().getHours();
   const isOpen = hour >= 9 && hour < 21;
+
+  function saveToStorage(next) {
+    try { localStorage.setItem("kudos", JSON.stringify(next)); } catch {}
+  }
 
   function addKudos(e) {
     e.preventDefault();
     const text = message.trim();
     if (!text) return;
     const now = new Date().toISOString();
-
-    setKudos(prev => [
-      ...prev,
-      {
-        id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
-        content: text,          // <-- use 'content' (not 'message')
-        createdAt: now,
-      },
-    ]);
+    const id = kudos.length ? Math.max(...kudos.map(k => Number(k.id) || 0)) + 1 : 1;
+    const entry = { id, content: text, createdAt: now };
+    const next = [entry, ...kudos]; // newest first
+    setKudos(next);
+    saveToStorage(next);
     setMessage("");
+
+    // scroll to wall
+    const wall = document.getElementById("kudos-wall");
+    if (wall) wall.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // Auto clear at 21:00
+  // Auto clear at 21:00 (state + storage)
   useEffect(() => {
-    const interval = setInterval(() => {
+    const checkAndClear = () => {
       const now = new Date();
-      if (now.getHours() === 21 && now.getMinutes() === 0) {
-        setKudos([]); // clear all at 9pm
+      if (now.getHours() >= 21) {
+        setKudos([]);
+        try { localStorage.removeItem("kudos"); } catch {}
       }
-    }, 60000);
-    return () => clearInterval(interval);
+    };
+    checkAndClear(); // run once on mount
+    const t = setInterval(checkAndClear, 60 * 1000);
+    return () => clearInterval(t);
   }, []);
 
   return (
     <>
+      {/* Turquoise banner */}
       <div style={{ ...S.card, marginBottom: 16, background: "turquoise", color: "white" }}>
         <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
       </div>
 
+      {/* Write a Kudos */}
       <div style={{ ...S.card, marginBottom: 16 }}>
         <div style={S.head}>Write a Kudos</div>
         {isOpen ? (
@@ -74,15 +90,13 @@ function Wall() {
         )}
       </div>
 
-      <div style={S.card}>
+      {/* Wall */}
+      <div id="kudos-wall" style={S.card}>
+        <div style={S.head}>Kudos Wall</div>
         <KudosPanel
           kudos={kudos}
-          getContent={(k) => k.content}        // <-- pass getContent
+          getContent={(k) => k.content}
           getCreatedAt={(k) => k.createdAt}
-          currentUserId={currentUserId}
-          allowedAdminIds={["rovester-"]}
-          onArchive={() => alert("Archive requested")}
-          onDelete={() => alert("Delete requested")}
         />
       </div>
     </>
@@ -97,6 +111,8 @@ export default function App() {
           <div className="brand">Rovester Kudos</div>
           <div className="spacer" />
           <Link to="/wall" className="btn">Wall</Link>
+          {/* Reports link */}
+          <Link to="/reports" className="btn" style={{ marginLeft: 8 }}>Reports</Link>
         </div>
       </nav>
 
@@ -104,6 +120,17 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Wall />} />
           <Route path="/wall" element={<Wall />} />
+          {/* Reports route — pass kudos via localStorage inside the page, or pass props if you prefer */}
+          <Route
+            path="/reports"
+            element={
+              <Reports
+                // Passing no kudos is fine because Reports reads localStorage if empty.
+                getContent={(k) => k.content}
+                getCreatedAt={(k) => k.createdAt}
+              />
+            }
+          />
           <Route path="*" element={<Navigate to="/wall" replace />} />
         </Routes>
       </main>
