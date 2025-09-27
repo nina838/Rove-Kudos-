@@ -2,45 +2,88 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
-    <title>Rovester Kudos Wall</title>
-    <meta name="description" content="Rovester Kudos — celebrate each other!" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kudos Live Wall</title>
+    <meta name="description" content="Kudos Live Wall — celebrate each other in real time!" />
+
+    <!-- Google Font for elegant look -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+
     <style>
-      :root { color-scheme: light dark; }
+      :root {
+        --turquoise: #40e0d0;
+        --turquoise-deep: #2bb3a6;
+        --light-blue: #eef9ff;
+        --slate: #0f172a;
+        --text-muted: #6b7280;
+        --gray-mid: #dfe8ef;
+      }
+
       body {
         margin: 0;
-        font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-        background: #f8fafc;
-        color: #0f172a;
+        font-family: 'Inter', system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+        background: var(--light-blue);
+        color: var(--slate);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
       }
-      a { color: inherit; text-decoration: none; }
-      .container { max-width: 1120px; margin: 0 auto; padding: 16px; }
+
+      a {
+        color: inherit;
+        text-decoration: none;
+      }
+
+      .container {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 16px;
+      }
+
       .nav {
-        position: sticky; top: 0; z-index: 10;
+        position: sticky;
+        top: 0;
+        z-index: 10;
         backdrop-filter: saturate(180%) blur(8px);
-        background: #ffffffcc; border-bottom: 1px solid #e5e7eb;
+        background: rgba(255, 255, 255, 0.9);
+        border-bottom: 1px solid var(--gray-mid);
       }
-      .nav-inner { display: flex; gap: 12px; align-items: center; height: 56px; }
-      .brand { font-weight: 700; font-size: 18px; }
-      .spacer { flex: 1; }
+
+      .nav-inner {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        height: 56px;
+      }
+
+      .brand {
+        font-weight: 800;
+        font-size: 18px;
+        color: var(--slate);
+      }
+
+      .spacer {
+        flex: 1;
+      }
+
+      .btn, .btn-outline {
+        padding: 8px 14px;
+        border-radius: 12px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
       .btn {
-        padding: 10px 14px; border-radius: 12px; border: 1px solid #0f172a;
-        background: #0f172a; color: #fff; font-size: 14px;
+        border: none;
+        background: var(--turquoise-deep);
+        color: #fff;
       }
+
       .btn-outline {
-        padding: 10px 14px; border-radius: 12px; border: 1px solid #cbd5e1;
-        background: #fff; color: #0f172a; font-size: 14px;
+        border: 1px solid var(--gray-mid);
+        background: #fff;
+        color: var(--slate);
       }
-      .card {
-        background: #fff; border: 1px solid #e5e7eb; border-radius: 16px;
-        box-shadow: 0 1px 2px rgba(0,0,0,.04); overflow: hidden;
-      }
-      .card-head { padding: 16px; border-bottom: 1px solid #e5e7eb; font-weight: 600; }
-      .card-body { padding: 16px; }
-      .muted { color: #64748b; }
     </style>
   </head>
   <body>
@@ -48,8 +91,3 @@
     <script type="module" src="/src/main.jsx"></script>
   </body>
 </html>
-<style>
-  .admin-only { display: none !important; }
-  body[data-admin-unlocked="true"] .admin-only { display: inline-flex !important; }
-</style>
-
