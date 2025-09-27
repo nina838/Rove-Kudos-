@@ -62,13 +62,22 @@ function Wall() {
     const t = setInterval(checkAndClear, 60 * 1000);
     return () => clearInterval(t);
   }, []);
+function Wall() {
+  // ...state and other code above
+{/* Turquoise/Blue gradient banner */}
+<div
+  style={{
+    ...S.card,
+    marginBottom: 16,
+    background: "linear-gradient(135deg, #40E0D0, #00BFFF)",
+    color: "white",
+    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+    border: "none"
+  }}
+>
+  <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
+</div>
 
-  return (
-    <>
-      {/* Turquoise banner */}
-      <div style={{ ...S.card, marginBottom: 16, background: "turquoise", color: "white" }}>
-        <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
-      </div>
 
       {/* Write a Kudos */}
       <div style={{ ...S.card, marginBottom: 16 }}>
