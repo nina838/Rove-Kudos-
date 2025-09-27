@@ -6,15 +6,32 @@ import Reports from "./pages/Reports.jsx";
 
 const S = {
   page: { paddingTop: 16 },
-  card: { background: "#fff", borderRadius: 16, padding: 16, boxShadow: "0 10px 30px rgba(0,0,0,.06)", border: "1px solid #e2e8f0" },
+  card: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: 16,
+    boxShadow: "0 10px 30px rgba(0,0,0,.06)",
+    border: "1px solid #e2e8f0",
+  },
   head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#0f172a" },
   row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
-  input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #d1d5db", minWidth: 260 },
-  btn: { padding: "10px 16px", borderRadius: 12, border: "1px solid #00a859", background: "#00a859", color: "#fff", cursor: "pointer" },
+  input: {
+    padding: "10px 12px",
+    borderRadius: 12,
+    border: "1px solid #d1d5db",
+    minWidth: 260,
+  },
+  btn: {
+    padding: "10px 16px",
+    borderRadius: 12,
+    border: "1px solid #00a859",
+    background: "#00a859",
+    color: "#fff",
+    cursor: "pointer",
+  },
 };
 
 function Wall() {
-  // hydrate from localStorage so Reports can see today's data too
   const [kudos, setKudos] = useState(() => {
     try {
       const raw = localStorage.getItem("kudos");
@@ -29,7 +46,9 @@ function Wall() {
   const isOpen = hour >= 9 && hour < 21;
 
   function saveToStorage(next) {
-    try { localStorage.setItem("kudos", JSON.stringify(next)); } catch {}
+    try {
+      localStorage.setItem("kudos", JSON.stringify(next));
+    } catch {}
   }
 
   function addKudos(e) {
@@ -37,47 +56,47 @@ function Wall() {
     const text = message.trim();
     if (!text) return;
     const now = new Date().toISOString();
-    const id = kudos.length ? Math.max(...kudos.map(k => Number(k.id) || 0)) + 1 : 1;
+    const id = kudos.length
+      ? Math.max(...kudos.map((k) => Number(k.id) || 0)) + 1
+      : 1;
     const entry = { id, content: text, createdAt: now };
-    const next = [entry, ...kudos]; // newest first
+    const next = [entry, ...kudos];
     setKudos(next);
     saveToStorage(next);
     setMessage("");
-
-    // scroll to wall
-    const wall = document.getElementById("kudos-wall");
-    if (wall) wall.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
-  // Auto clear at 21:00 (state + storage)
+  // Auto clear at 21:00
   useEffect(() => {
     const checkAndClear = () => {
       const now = new Date();
       if (now.getHours() >= 21) {
         setKudos([]);
-        try { localStorage.removeItem("kudos"); } catch {}
+        try {
+          localStorage.removeItem("kudos");
+        } catch {}
       }
     };
-    checkAndClear(); // run once on mount
+    checkAndClear();
     const t = setInterval(checkAndClear, 60 * 1000);
     return () => clearInterval(t);
   }, []);
-function Wall() {
-  // ...state and other code above
-{/* Turquoise/Blue gradient banner */}
-<div
-  style={{
-    ...S.card,
-    marginBottom: 16,
-    background: "linear-gradient(135deg, #40E0D0, #00BFFF)",
-    color: "white",
-    boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
-    border: "none"
-  }}
->
-  <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
-</div>
 
+  return (
+    <>
+      {/* Elegant gradient header */}
+      <div
+        style={{
+          ...S.card,
+          marginBottom: 16,
+          background: "linear-gradient(135deg, #40E0D0, #00BFFF)",
+          color: "white",
+          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+          border: "none",
+        }}
+      >
+        <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
+      </div>
 
       {/* Write a Kudos */}
       <div style={{ ...S.card, marginBottom: 16 }}>
@@ -90,7 +109,9 @@ function Wall() {
               value={message}
               onChange={(e) => setMessage(e.target.value)}
             />
-            <button style={S.btn} type="submit">Add Kudos</button>
+            <button style={S.btn} type="submit">
+              Add Kudos
+            </button>
           </form>
         ) : (
           <div style={{ color: "#64748b" }}>
@@ -100,7 +121,7 @@ function Wall() {
       </div>
 
       {/* Wall */}
-      <div id="kudos-wall" style={S.card}>
+      <div style={S.card}>
         <div style={S.head}>Kudos Wall</div>
         <KudosPanel
           kudos={kudos}
@@ -119,9 +140,12 @@ export default function App() {
         <div className="container nav-inner">
           <div className="brand">Rovester Kudos</div>
           <div className="spacer" />
-          <Link to="/wall" className="btn">Wall</Link>
-          {/* Reports link */}
-          <Link to="/reports" className="btn" style={{ marginLeft: 8 }}>Reports</Link>
+          <Link to="/wall" className="btn">
+            Wall
+          </Link>
+          <Link to="/reports" className="btn" style={{ marginLeft: 8 }}>
+            Reports
+          </Link>
         </div>
       </nav>
 
@@ -129,12 +153,10 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Wall />} />
           <Route path="/wall" element={<Wall />} />
-          {/* Reports route — pass kudos via localStorage inside the page, or pass props if you prefer */}
           <Route
             path="/reports"
             element={
               <Reports
-                // Passing no kudos is fine because Reports reads localStorage if empty.
                 getContent={(k) => k.content}
                 getCreatedAt={(k) => k.createdAt}
               />
