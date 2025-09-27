@@ -1,56 +1,32 @@
 // src/components/KudosPanel.jsx
-import React, { useMemo, useEffect, useState } from "react";
+import React, { useMemo } from "react";
 
 export default function KudosPanel({
   kudos,
-  getContent,
-  getCreatedAt,
+  getContent,      // function: (k) => string
+  getCreatedAt,    // function: (k) => ISO string/date
 }) {
   const THEME = {
     lightBlue: "#eef9ff",
-    blue: "#2b7bd3",
-    turquoise: "#40E0D0",
     slate: "#0f172a",
     grayMid: "#dfe8ef",
     textMuted: "#6b7280",
   };
 
-  const styles = {
+  const S = {
     section: { marginBottom: 12 },
-    itemCard: {
+    card: {
       background: THEME.lightBlue,
       borderRadius: 12,
       padding: 14,
       marginBottom: 12,
       border: `1px solid ${THEME.grayMid}`,
       boxShadow: "0 6px 18px rgba(15,23,42,0.03)",
-      transition: "transform 220ms ease, opacity 220ms ease",
-      opacity: 1,
     },
-    itemMessage: { fontSize: 15, color: THEME.slate, marginBottom: 8, lineHeight: 1.5 },
-    itemTime: { fontSize: 13, color: THEME.textMuted },
+    msg: { fontSize: 15, color: THEME.slate, marginBottom: 8, lineHeight: 1.5 },
+    time: { fontSize: 13, color: THEME.textMuted },
     empty: { color: THEME.textMuted, fontSize: 14 },
   };
-
-  // add a small local 'mount' flag to animate newly rendered items
-  const [mountedIds, setMountedIds] = useState(() => (kudos || []).map(k => k.id));
-
-  useEffect(() => {
-    // when kudos change, mark any new ids and animate
-    const ids = (kudos || []).map(k => k.id);
-    const newIds = ids.filter(id => !mountedIds.includes(id));
-    if (newIds.length > 0) {
-      setMountedIds(prev => [...newIds, ...prev]);
-      // remove old ids from mounted list after animation window (to keep array small)
-      const t = setTimeout(() => {
-        setMountedIds(ids);
-      }, 600);
-      return () => clearTimeout(t);
-    } else {
-      // keep mounted in sync
-      setMountedIds(ids);
-    }
-  }, [kudos]);
 
   const items = Array.isArray(kudos) ? kudos : [];
   const sorted = useMemo(
@@ -60,22 +36,20 @@ export default function KudosPanel({
 
   return (
     <div>
-      <section style={styles.section}>
+      <section style={S.section}>
         {sorted.length === 0 ? (
-          <div style={styles.empty}>No kudos yet. Be the first — your message will appear instantly.</div>
+          <div style={S.empty}>No kudos yet. Be the first — your message will appear instantly.</div>
         ) : (
           sorted.map((k) => {
-            // subtle mount animation styles
-            const isNew = mountedIds.includes(k.id);
-            const animStyle = isNew ? { transform: "translateY(0)", opacity: 1 } : { transform: "translateY(0)", opacity: 1 };
+            const text =
+              (typeof getContent === "function" ? getContent(k) : undefined) ??
+              k.content ??
+              k.message ??
+              "";
             return (
-              <div
-                key={k.id}
-                style={{ ...styles.itemCard, ...animStyle }}
-                aria-live="polite"
-              >
-                <div style={styles.itemMessage}>{getContent?.(k) ?? ""}</div>
-                <div style={styles.itemTime}>{new Date(getCreatedAt(k)).toLocaleString()}</div>
+              <div key={k.id} style={S.card}>
+                <div style={S.msg}>{text}</div>
+                <div style={S.time}>{new Date(getCreatedAt(k)).toLocaleString()}</div>
               </div>
             );
           })
