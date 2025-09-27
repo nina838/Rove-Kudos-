@@ -116,7 +116,6 @@ function Wall() {
     saveToStorage(next);
     setMessage("");
 
-    // random greeting after posting
     const randomGreet = greetings[Math.floor(Math.random() * greetings.length)];
     setGreeting(randomGreet);
   }
@@ -171,7 +170,7 @@ function Wall() {
       >
         <img
           className="duck-bob duck-wave"
-          src="https://img.icons8.com/emoji/96/front-facing-baby-chick.png"
+          src="https://raw.githubusercontent.com/twitter/twemoji/master/assets/72x72/1f425.png"
           alt="Rove Duck"
           style={{ width: 56, height: 56 }}
         />
@@ -238,3 +237,4 @@ export default function App() {
     </>
   );
 }
+
