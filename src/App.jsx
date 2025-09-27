@@ -23,14 +23,16 @@ function Wall() {
 
   function addKudos(e) {
     e.preventDefault();
-    if (!message.trim()) return;
-    const now = new Date();
+    const text = message.trim();
+    if (!text) return;
+    const now = new Date().toISOString();
+
     setKudos(prev => [
       ...prev,
       {
         id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
-        message: message.trim(),
-        createdAt: now.toISOString(),
+        content: text,          // <-- use 'content' (not 'message')
+        createdAt: now,
       },
     ]);
     setMessage("");
@@ -56,26 +58,26 @@ function Wall() {
       <div style={{ ...S.card, marginBottom: 16 }}>
         <div style={S.head}>Write a Kudos</div>
         {isOpen ? (
-          <>
-            <form onSubmit={addKudos} style={{ ...S.row }}>
-              <input
-                style={S.input}
-                placeholder="Write your kudos..."
-                value={message}
-                onChange={(e) => setMessage(e.target.value)}
-              />
-              <button style={S.btn} type="submit">Add Kudos</button>
-            </form>
-          </>
+          <form onSubmit={addKudos} style={{ ...S.row }}>
+            <input
+              style={S.input}
+              placeholder="Write your kudos..."
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+            />
+            <button style={S.btn} type="submit">Add Kudos</button>
+          </form>
         ) : (
-          <div style={{ color: "#64748b" }}>Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.</div>
+          <div style={{ color: "#64748b" }}>
+            Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.
+          </div>
         )}
       </div>
 
       <div style={S.card}>
         <KudosPanel
           kudos={kudos}
-          getRecipientName={(k) => k.message}
+          getContent={(k) => k.content}        // <-- pass getContent
           getCreatedAt={(k) => k.createdAt}
           currentUserId={currentUserId}
           allowedAdminIds={["rovester-"]}
