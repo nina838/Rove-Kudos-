@@ -1,156 +1,183 @@
 // src/App.jsx
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx";
 import Reports from "./pages/Reports.jsx";
 
 const THEME = {
-  lightBlue: "#e8f2ff",   // very light blue background / card tint
-  blue: "#2b7bd3",        // primary blue accent
-  turquoise: "#2bcab3",   // turquoise / primary action
-  slate: "#0f172a",       // dark slate text
-  graySoft: "#f6f8fb",    // pale grey page bg
-  grayMid: "#dfe8ef",     // card border / soft element
-  textMuted: "#6b7280",   // muted grey text
+  turquoise: "#40E0D0",
+  turquoiseDeep: "#2BB3A6",
+  lightBlue: "#eef9ff",
+  blue: "#2b7bd3",
+  slate: "#0f172a",
+  graySoft: "#f6f8fb",
+  grayMid: "#dfe8ef",
+  textMuted: "#6b7280",
 };
 
 const S = {
   page: { paddingTop: 22 },
-  headerCard: {
-    background: `linear-gradient(90deg, ${THEME.lightBlue}, rgba(43,123,211,0.03))`,
+  banner: {
+    background: THEME.turquoise,
     borderRadius: 18,
-    padding: 24,
-    boxShadow: "0 12px 40px rgba(15,23,42,0.04)",
-    border: `1px solid ${THEME.grayMid}`,
-    marginBottom: 20,
+    padding: 28,
+    marginBottom: 18,
+    color: "#fff",
+    textAlign: "center",
+    fontWeight: 800,
+    fontSize: 30,
+    boxShadow: "0 10px 30px rgba(11,72,64,0.08)",
   },
-  title: { fontWeight: 800, fontSize: 32, color: THEME.slate, marginBottom: 8 },
-  taglineRow: { display: "flex", gap: 12, alignItems: "center", color: THEME.textMuted },
-  badge: {
-    display: "inline-flex",
-    alignItems: "center",
-    gap: 8,
-    padding: "6px 14px",
-    borderRadius: 999,
-    background: "#ffffff",
-    color: THEME.blue,
-    border: `1px solid rgba(43,123,211,0.08)`,
-    fontWeight: 700,
-    fontSize: 13,
-    boxShadow: "inset 0 1px 0 rgba(255,255,255,0.6)"
-  },
-
-  card: {
-    background: "#fff",
+  writeCard: {
+    background: THEME.turquoise,
     borderRadius: 16,
     padding: 20,
-    boxShadow: "0 10px 30px rgba(15,23,42,0.03)",
-    border: `1px solid ${THEME.grayMid}`,
     marginBottom: 18,
+    color: "#fff",
+    boxShadow: "0 10px 30px rgba(11,72,64,0.06)",
+    display: "flex",
+    gap: 16,
+    alignItems: "flex-start",
+    flexWrap: "wrap",
   },
-
-  formRow: { display: "flex", gap: 14, alignItems: "flex-start", flexWrap: "wrap" },
+  writeTitle: { fontWeight: 800, fontSize: 20, marginBottom: 4 },
   textarea: {
     padding: 14,
-    borderRadius: 14,
-    border: `1px solid ${THEME.grayMid}`,
-    minWidth: 440,
+    borderRadius: 12,
+    border: "none",
+    minWidth: 420,
     minHeight: 100,
     resize: "vertical",
     fontSize: 15,
-    color: THEME.slate,
-    background: "#fcfeff",
-    boxShadow: "inset 0 1px 0 rgba(16,24,40,0.02)"
+    color: "#05323a",
+    background: "rgba(255,255,255,0.92)",
+    boxShadow: "inset 0 1px 0 rgba(0,0,0,0.03)",
   },
-  btn: {
-    padding: "12px 20px",
-    borderRadius: 14,
-    border: "1px solid transparent",
-    background: THEME.turquoise,
+  addBox: { display: "flex", flexDirection: "column", gap: 12, minWidth: 160 },
+  addBtn: {
+    padding: "12px 18px",
+    borderRadius: 12,
+    border: "none",
+    background: THEME.turquoiseDeep,
     color: "#fff",
     cursor: "pointer",
     fontWeight: 800,
     fontSize: 15,
-    boxShadow: "0 8px 22px rgba(43,123,211,0.08)"
+    boxShadow: "0 8px 22px rgba(43,123,211,0.08)",
   },
-  smallNote: { color: THEME.textMuted, fontSize: 13, marginTop: 10 },
-
-  wallHead: { fontWeight: 800, fontSize: 20, marginBottom: 12, color: THEME.slate },
+  note: { color: "rgba(255,255,255,0.9)", fontSize: 13 },
+  wallContainer: {
+    background: "#fff",
+    borderRadius: 16,
+    padding: 18,
+    boxShadow: "0 10px 30px rgba(15,23,42,0.03)",
+    border: `1px solid ${THEME.grayMid}`,
+  },
   navBrand: { fontWeight: 800, color: THEME.slate },
-  navBtn: { background: "transparent", color: THEME.blue, borderRadius: 12, padding: "8px 12px", border: `1px solid rgba(43,123,211,0.08)` }
+  navBtn: { background: "transparent", color: THEME.blue, borderRadius: 12, padding: "8px 12px" },
 };
 
 function Wall() {
+  // load cached kudos (persisted during the day)
+  const [kudos, setKudos] = useState(() => {
+    try {
+      const raw = localStorage.getItem("kudos");
+      if (!raw) return [];
+      const parsed = JSON.parse(raw);
+      // ensure it's an array
+      if (!Array.isArray(parsed)) return [];
+      return parsed;
+    } catch (e) {
+      return [];
+    }
+  });
+
+  const [kudosText, setKudosText] = useState("");
   const currentUserId = "guest";
   const allowedAdmins = ["rovester-"];
 
-  const [kudos, setKudos] = useState([
-    { id: 1, content: "Shoutout for excellent Q1 delivery!", createdAt: "2025-01-05T10:30:00" },
-    { id: 2, content: "Alice helped unblock the release — awesome work!", createdAt: "2025-02-11T14:12:00" },
-    { id: 3, content: "Bob's design improvements look great.", createdAt: "2025-02-19T09:45:00" },
-  ]);
+  // save to localStorage whenever kudos changes
+  useEffect(() => {
+    try {
+      localStorage.setItem("kudos", JSON.stringify(kudos));
+    } catch (e) { /* ignore */ }
+  }, [kudos]);
 
-  const [kudosText, setKudosText] = useState("");
+  // Auto-clear at 21:00 daily (clears state + localStorage)
+  useEffect(() => {
+    function checkAndClear() {
+      const now = new Date();
+      const hour = now.getHours();
+      if (hour >= 21) {
+        setKudos([]);
+        try { localStorage.removeItem("kudos"); } catch (e) {}
+      }
+    }
+    // run immediately and then every minute
+    checkAndClear();
+    const interval = setInterval(checkAndClear, 60 * 1000);
+    return () => clearInterval(interval);
+  }, []);
 
-  const hour = new Date().getHours(); // 09:00–21:00 open
+  const hour = new Date().getHours();
   const isOpen = hour >= 9 && hour < 21;
 
   function addKudos(e) {
     e.preventDefault();
     const text = (kudosText || "").trim();
-    if (!text) { alert("Please write your kudos before submitting."); return; }
-    const now = new Date().toISOString();
-    setKudos(prev => [
-      {
-        id: prev.length ? Math.max(...prev.map(k => Number(k.id) || 0)) + 1 : 1,
-        content: text,
-        createdAt: now,
-      },
-      ...prev,
-    ]);
+    if (!text) {
+      alert("Please write your kudos before submitting.");
+      return;
+    }
+    const now = new Date();
+    const iso = now.toISOString();
+    const id = kudos.length ? Math.max(...kudos.map(k => Number(k.id) || 0)) + 1 : 1;
+    // newest first
+    const entry = { id, content: text, createdAt: iso };
+    setKudos(prev => [entry, ...prev]);
     setKudosText("");
-    // scroll to wall top
+    // scroll to wall
     const wall = document.getElementById("kudos-wall");
     if (wall) wall.scrollIntoView({ behavior: "smooth", block: "start" });
   }
 
   return (
     <>
-      <div style={S.headerCard}>
-        <div style={S.title}>Kudos Live Wall</div>
-        <div style={S.taglineRow}>
-          <div style={S.badge}>Rove</div>
-          <div style={{ color: THEME.textMuted }}>
-            Share quick kudos — they publish instantly with a timestamp. Light, calm, and elegant.
-          </div>
+      <div style={S.banner}>Kudos Live Wall</div>
+
+      <div style={S.writeCard}>
+        <div style={{ flex: 1, minWidth: 420 }}>
+          <div style={S.writeTitle}>Write a Kudos</div>
+          {isOpen ? (
+            <textarea
+              style={S.textarea}
+              placeholder="Write your kudos (mention names or wins) — it will show on the wall with date & time."
+              value={kudosText}
+              onChange={(e) => setKudosText(e.target.value)}
+            />
+          ) : (
+            <div style={{ ...S.textarea, display: "flex", alignItems: "center", justifyContent: "center" }}>
+              Kudos Live Wall is closed now. Open daily 09:00–21:00.
+            </div>
+          )}
+        </div>
+
+        <div style={S.addBox}>
+          <button
+            style={S.addBtn}
+            type="button"
+            onClick={addKudos}
+            disabled={!isOpen}
+            title={isOpen ? "Add Kudos" : "Closed until 09:00"}
+          >
+            Add Kudos
+          </button>
+          <div style={S.note}>Your kudos appears instantly on the wall with local date & time.</div>
         </div>
       </div>
 
-      <div style={S.card}>
-        <div style={{ fontWeight: 800, fontSize: 20, color: THEME.slate, marginBottom: 12 }}>Write a Kudos</div>
-
-        {isOpen ? (
-          <>
-            <form onSubmit={addKudos} style={S.formRow}>
-              <textarea
-                style={S.textarea}
-                placeholder="Write your kudos... (e.g., 'Thanks Sam for pairing on the fix — shipping faster because of you')"
-                value={kudosText}
-                onChange={(e) => setKudosText(e.target.value)}
-              />
-              <div style={{ display: "flex", flexDirection: "column", gap: 12 }}>
-                <button style={S.btn} type="submit">Add Kudos</button>
-                <div style={S.smallNote}>Publishes immediately to the wall with local date &amp; time.</div>
-              </div>
-            </form>
-          </>
-        ) : (
-          <div style={{ color: THEME.textMuted }}>Kudos Live Wall is closed now. Open daily <b>09:00–21:00</b>.</div>
-        )}
-      </div>
-
-      <div id="kudos-wall" style={S.card}>
-        <div style={S.wallHead}>Kudos Wall</div>
+      <div id="kudos-wall" style={S.wallContainer}>
+        <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 12, color: THEME.slate }}>Kudos Wall</div>
         <KudosPanel
           kudos={kudos}
           getContent={(k) => k.content}
@@ -172,7 +199,7 @@ export default function App() {
         <div className="container nav-inner">
           <div className="brand" style={S.navBrand}>Rovester Kudos</div>
           <div className="spacer" />
-          <Link to="/wall" className="btn" style={{ ...S.navBtn, background: "transparent", color: THEME.blue }}>Wall</Link>
+          <Link to="/wall" className="btn" style={{ ...S.navBtn, background: "transparent" }}>Wall</Link>
           <Link to="/reports" className="btn-outline" style={{ marginLeft: 8 }}>Reports</Link>
         </div>
       </nav>
@@ -185,8 +212,6 @@ export default function App() {
             <Reports
               kudos={[
                 { id: 1, content: "Rovester Admin kickoff", createdAt: "2025-01-05T10:30:00" },
-                { id: 2, content: "Alice did great work", createdAt: "2025-02-11T14:12:00" },
-                { id: 3, content: "Bob's help was invaluable", createdAt: "2025-02-19T09:45:00" },
               ]}
               getRecipient={(k) => k.toUserId}
               getRecipientName={(k) => k.toUserName}
@@ -199,29 +224,3 @@ export default function App() {
     </>
   );
 }
-const [kudos, setKudos] = useState(() => {
-  // Load from localStorage if present
-  const stored = localStorage.getItem("kudos");
-  return stored ? JSON.parse(stored) : [];
-});
-
-useEffect(() => {
-  localStorage.setItem("kudos", JSON.stringify(kudos));
-}, [kudos]);
-
-// Auto-clear kudos at 21:00
-useEffect(() => {
-  function checkAndClear() {
-    const now = new Date();
-    const hour = now.getHours();
-    if (hour >= 21) {
-      setKudos([]);
-      localStorage.removeItem("kudos");
-    }
-  }
-  // check right away
-  checkAndClear();
-  // check every minute
-  const interval = setInterval(checkAndClear, 60 * 1000);
-  return () => clearInterval(interval);
-}, []);
