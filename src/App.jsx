@@ -13,7 +13,7 @@ const S = {
     boxShadow: "0 6px 20px rgba(0,0,0,.05)",
     border: "1px solid #e2e8f0",
   },
-  head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#007f89" }, // turquoise text
+  head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#007f89" },
   row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
   input: {
     padding: "10px 12px",
@@ -97,6 +97,29 @@ function Wall() {
         }}
       >
         <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
+      </div>
+
+      {/* Cute Duck Greeting */}
+      <div
+        style={{
+          display: "flex",
+          alignItems: "center",
+          gap: 12,
+          background: "#fffbea",
+          borderRadius: 16,
+          padding: "12px 16px",
+          marginBottom: 16,
+          boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+        }}
+      >
+        <img
+          src="https://img.icons8.com/emoji/96/duck-emoji.png"
+          alt="Duck"
+          style={{ width: 50, height: 50 }}
+        />
+        <div style={{ fontSize: 18, fontWeight: 600, color: "#f4b400" }}>
+          🦆 Hi Rovester! Welcome to your Kudos Wall
+        </div>
       </div>
 
       {/* Write a Kudos */}
