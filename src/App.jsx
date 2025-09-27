@@ -199,3 +199,29 @@ export default function App() {
     </>
   );
 }
+const [kudos, setKudos] = useState(() => {
+  // Load from localStorage if present
+  const stored = localStorage.getItem("kudos");
+  return stored ? JSON.parse(stored) : [];
+});
+
+useEffect(() => {
+  localStorage.setItem("kudos", JSON.stringify(kudos));
+}, [kudos]);
+
+// Auto-clear kudos at 21:00
+useEffect(() => {
+  function checkAndClear() {
+    const now = new Date();
+    const hour = now.getHours();
+    if (hour >= 21) {
+      setKudos([]);
+      localStorage.removeItem("kudos");
+    }
+  }
+  // check right away
+  checkAndClear();
+  // check every minute
+  const interval = setInterval(checkAndClear, 60 * 1000);
+  return () => clearInterval(interval);
+}, []);
