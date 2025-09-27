@@ -76,9 +76,9 @@ function Wall() {
   `;
 
   const greetings = [
-    "🦆 Hi Rovester!",
+    "🐥 Hi Rovester!",
     "Quack quack! Keep the kudos coming!",
-    "🦆 Hello friend!",
+    "🐥 Hello friend!",
     "You're awesome! 💛",
   ];
   const [greeting, setGreeting] = useState(greetings[0]);
@@ -155,7 +155,7 @@ function Wall() {
         <div style={{ ...S.head, color: "white" }}>Kudos Live Wall</div>
       </div>
 
-      {/* Cute Duck */}
+      {/* Cute Full Yellow Duck */}
       <div
         style={{
           display: "flex",
@@ -171,8 +171,8 @@ function Wall() {
       >
         <img
           className="duck-bob duck-wave"
-          src="https://img.icons8.com/emoji/96/duck-emoji.png"
-          alt="Duck"
+          src="https://img.icons8.com/emoji/96/front-facing-baby-chick.png"
+          alt="Rove Duck"
           style={{ width: 56, height: 56 }}
         />
         <div className="duck-speech">{greeting}</div>
