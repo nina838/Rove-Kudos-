@@ -1,32 +1,38 @@
 // src/pages/Reports.jsx
 import React, { useMemo, useState } from "react";
 
-export default function Reports({ kudos, getRecipient, getRecipientName, getCreatedAt }) {
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-
-  const people = useMemo(() => {
-    const m = new Map();
-    for (const k of kudos || []) {
-      const id = getRecipient(k);
-      if (id == null) continue;
-      const name = getRecipientName?.(k) ?? String(id);
-      if (!m.has(id)) m.set(id, name);
+/**
+ * Monthly report that works with kudos shaped as:
+ *   { id, content, createdAt }
+ * Props:
+ *   - kudos?: array (optional)
+ *   - getContent?: (k) => string
+ *   - getCreatedAt?: (k) => string|Date
+ */
+export default function Reports({
+  kudos: kudosProp = [],
+  getContent = (k) => k.content,
+  getCreatedAt = (k) => k.createdAt,
+}) {
+  // If no kudos were passed in, try localStorage so this page still works standalone
+  const kudosFromStorage = useMemo(() => {
+    try {
+      const raw = localStorage.getItem("kudos");
+      if (!raw) return [];
+      const arr = JSON.parse(raw);
+      return Array.isArray(arr) ? arr : [];
+    } catch {
+      return [];
     }
-    return Array.from(m, ([id, name]) => ({ id: String(id), name }));
-  }, [kudos, getRecipient, getRecipientName]);
+  }, []);
 
-  const [personQuery, setPersonQuery] = useState("");
-  const selectedPerson = useMemo(() => {
-    if (!personQuery) return null;
-    const exact = people.find(p => String(p.id) === personQuery.trim());
-    if (exact) return exact;
-    const q = personQuery.trim().toLowerCase();
-    return people.find(p => p.name.toLowerCase().includes(q)) || null;
-  }, [people, personQuery]);
+  const allKudos = (kudosProp && kudosProp.length ? kudosProp : kudosFromStorage) || [];
 
+  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
   const now = new Date();
   const [selMonth, setSelMonth] = useState(now.getMonth());
   const [selYear, setSelYear] = useState(now.getFullYear());
+  const [keyword, setKeyword] = useState("");
   const [rows, setRows] = useState([]);
 
   function withinSelectedMonth(dt) {
@@ -34,69 +40,106 @@ export default function Reports({ kudos, getRecipient, getRecipientName, getCrea
   }
 
   function generate() {
-    const map = new Map();
-    (kudos || []).forEach(k => {
+    const lower = keyword.trim().toLowerCase();
+    const filtered = [];
+
+    for (const k of allKudos) {
       const dt = new Date(getCreatedAt(k));
-      if (isNaN(dt)) return;
-      if (!withinSelectedMonth(dt)) return;
+      if (isNaN(dt)) continue;
+      if (!withinSelectedMonth(dt)) continue;
 
-      const pid = String(getRecipient(k));
-      const pname = getRecipientName?.(k) ?? pid;
-      if (selectedPerson && pid !== selectedPerson.id) return;
+      const text = (getContent?.(k) ?? k.content ?? k.message ?? "").toString();
+      if (lower && !text.toLowerCase().includes(lower)) continue;
 
-      if (!map.has(pid)) map.set(pid, { name: pname, count: 0 });
-      map.get(pid).count++;
-    });
+      filtered.push({
+        id: k.id,
+        text,
+        when: dt,
+      });
+    }
 
-    setRows(Array.from(map.values()).sort((a, b) => b.count - a.count));
+    // Newest first
+    filtered.sort((a, b) => b.when - a.when);
+    setRows(filtered);
   }
 
+  const totalCount = rows.length;
+
   const S = {
-    row: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" },
-    input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #e2e8f0" },
-    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 8, background: "#fff", borderRadius: 12, overflow: "hidden" },
-    th: { textAlign: "left", borderBottom: "1px solid #e5e7eb", padding: "10px 12px", background: "#f1f5f9" },
-    td: { borderBottom: "1px solid #f1f5f9", padding: "10px 12px" },
+    wrap: { paddingTop: 16 },
+    card: { background: "#fff", borderRadius: 16, padding: 16, border: "1px solid #e2e8f0" },
     h2: { marginTop: 0, color: "var(--rove-blue, #003da5)" },
+    row: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 },
+    input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #e2e8f0" },
     btn: { padding: "10px 14px", borderRadius: 12, border: "1px solid var(--rove-blue, #003da5)", background: "var(--rove-blue, #003da5)", color: "#fff", cursor: "pointer" },
+    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 10, background: "#fff", borderRadius: 12, overflow: "hidden" },
+    th: { textAlign: "left", borderBottom: "1px solid #e5e7eb", padding: "10px 12px", background: "#f1f5f9" },
+    td: { borderBottom: "1px solid #f1f5f9", padding: "10px 12px", verticalAlign: "top" },
+    muted: { color: "#64748b" },
+    kpi: { fontWeight: 800, fontSize: 16 },
   };
 
   return (
-    <div className="container" style={{ paddingTop: 16 }}>
-      <div className="card" style={{ background: "#fff", borderRadius: 16, padding: 16, border: "1px solid #e2e8f0" }}>
+    <div className="container" style={S.wrap}>
+      <div className="card" style={S.card}>
         <h2 style={S.h2}>Monthly Kudos Report</h2>
 
-        <div style={{ ...S.row, marginBottom: 8 }}>
-          <input
-            placeholder="Filter by person name or ID…"
-            value={personQuery}
-            onChange={(e) => setPersonQuery(e.target.value)}
-            list="report-people"
-            style={{ ...S.input, minWidth: 260 }}
-          />
-          <datalist id="report-people">
-            {people.map(p => <option key={p.id} value={p.name} />)}
-            {people.map(p => <option key={p.id + "-id"} value={p.id} />)}
-          </datalist>
-
+        <div style={S.row}>
           <select value={selMonth} onChange={(e)=>setSelMonth(Number(e.target.value))} style={S.input}>
             {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
           </select>
 
-          <input type="number" value={selYear} onChange={(e)=>setSelYear(Number(e.target.value))} style={{ ...S.input, width: 120 }} />
+          <input
+            type="number"
+            value={selYear}
+            onChange={(e)=>setSelYear(Number(e.target.value))}
+            style={{ ...S.input, width: 120 }}
+          />
+
+          <input
+            placeholder="Filter by keyword..."
+            value={keyword}
+            onChange={(e) => setKeyword(e.target.value)}
+            style={{ ...S.input, minWidth: 240 }}
+          />
+
           <button style={S.btn} onClick={generate}>Generate</button>
         </div>
 
         {rows.length ? (
-          <table style={S.table}>
-            <thead><tr><th style={S.th}>Person</th><th style={S.th}>Kudos</th></tr></thead>
-            <tbody>{rows.map((r, i) => <tr key={i}><td style={S.td}>{r.name}</td><td style={S.td}>{r.count}</td></tr>)}</tbody>
-          </table>
+          <>
+            <div style={{ marginTop: 6 }}>
+              <span style={S.kpi}>{totalCount}</span>{" "}
+              <span style={S.muted}>kudos in {MONTHS[selMonth]} {selYear}</span>
+            </div>
+            <table style={S.table}>
+              <thead>
+                <tr>
+                  <th style={S.th} width="56">#</th>
+                  <th style={S.th}>Kudos</th>
+                  <th style={S.th} width="220">Date &amp; Time</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r, idx) => (
+                  <tr key={r.id ?? idx}>
+                    <td style={S.td}>{idx + 1}</td>
+                    <td style={S.td}>{r.text}</td>
+                    <td style={S.td}>{r.when.toLocaleString()}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </>
         ) : (
-          <div style={{ color: "#64748b" }}>Pick a month/year (and optionally a person) then click Generate.</div>
+          <div style={{ ...S.muted, marginTop: 8 }}>
+            Pick month/year (and optionally a keyword) then click <b>Generate</b>.
+            {(!allKudos || allKudos.length === 0) && (
+              <> No data found. If you’re clearing the wall at 21:00, consider persisting kudos to localStorage.</>
+            )}
+          </div>
         )}
       </div>
     </div>
   );
 }
-
