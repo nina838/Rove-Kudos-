@@ -13,7 +13,7 @@ const S = {
     boxShadow: "0 6px 20px rgba(0,0,0,.05)",
     border: "1px solid #e2e8f0",
   },
-  head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#003da5" }, // rove blue
+  head: { fontWeight: 700, fontSize: 20, marginBottom: 8, color: "#007f89" }, // turquoise text
   row: { display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" },
   input: {
     padding: "10px 12px",
@@ -85,12 +85,12 @@ function Wall() {
 
   return (
     <>
-      {/* Elegant Turquoise & Rove Blue Banner */}
+      {/* Turquoise Gradient Header */}
       <div
         style={{
           ...S.card,
           marginBottom: 16,
-          background: "linear-gradient(135deg, #40E0D0, #003da5)",
+          background: "linear-gradient(135deg, #40E0D0, #20c1c8)",
           color: "white",
           boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
           border: "none",
@@ -101,7 +101,7 @@ function Wall() {
 
       {/* Write a Kudos */}
       <div style={{ ...S.card, marginBottom: 16, background: "#f5f7fa" }}>
-        <div style={{ ...S.head, color: "#003da5" }}>Write a Kudos</div>
+        <div style={{ ...S.head, color: "#007f89" }}>Write a Kudos</div>
         {isOpen ? (
           <form onSubmit={addKudos} style={{ ...S.row }}>
             <input
@@ -123,7 +123,7 @@ function Wall() {
 
       {/* Wall */}
       <div style={S.card}>
-        <div style={{ ...S.head, color: "#003da5" }}>Kudos Wall</div>
+        <div style={{ ...S.head, color: "#007f89" }}>Kudos Wall</div>
         <KudosPanel
           kudos={kudos}
           getContent={(k) => k.content}
@@ -137,19 +137,23 @@ function Wall() {
 export default function App() {
   return (
     <>
-      <nav className="nav" style={{ background: "#003da5", color: "white" }}>
+      <nav className="nav" style={{ background: "#40E0D0", color: "white" }}>
         <div className="container nav-inner">
           <div className="brand" style={{ color: "white" }}>
             Rovester Kudos
           </div>
           <div className="spacer" />
-          <Link to="/wall" className="btn" style={{ color: "#003da5", background: "white" }}>
+          <Link
+            to="/wall"
+            className="btn"
+            style={{ color: "#007f89", background: "white" }}
+          >
             Wall
           </Link>
           <Link
             to="/reports"
             className="btn"
-            style={{ marginLeft: 8, color: "#003da5", background: "white" }}
+            style={{ marginLeft: 8, color: "#007f89", background: "white" }}
           >
             Reports
           </Link>
