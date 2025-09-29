@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Rove Kudos — Add</title>
+  <link rel="stylesheet" href="index.css" />
+  <style>
+    .card { padding:16px; background:#f8fafc; border-radius:12px; margin:16px auto; max-width:720px; }
+    .row { display:flex; gap:8px; }
+    .input { flex:1; padding:10px 12px; border:1px solid #e2e8f0; border-radius:12px; }
+    .btn { padding:10px 14px; border:0; border-radius:12px; background:#003da5; color:#fff; cursor:pointer; }
+    .ok { margin-top:8px; color:#16a34a; }
+    a.link { color:#003da5; text-decoration:underline; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Rove Kudos — Add</h1>
+    <form id="kudoForm" class="row">
+      <input id="kudoInput" class="input" placeholder="Write a kudo..." />
+      <button class="btn" type="submit">Save</button>
+    </form>
+    <div id="kudoMsg" class="ok"></div>
+    <p>See your monthly report → <a class="link" href="report.html">Open Report</a></p>
+  </div>
+
+  <script>
+    const form = document.getElementById('kudoForm');
+    const input = document.getElementById('kudoInput');
+    const msg = document.getElementById('kudoMsg');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+      const old = JSON.parse(localStorage.getItem('kudos') || '[]');
+      old.push({
+        id: Date.now(),
+        content: text,
+        createdAt: new Date().toISOString(),
+      });
+      localStorage.setItem('kudos', JSON.stringify(old));
+      input.value = '';
+      msg.textContent = '✅ Kudo saved!';
+      setTimeout(() => (msg.textContent = ''), 2000);
+    });
+  </script>
+</body>
+</html>
