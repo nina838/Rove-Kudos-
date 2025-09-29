@@ -26,17 +26,38 @@ export default function Reports({
     }
   }, []);
 
-  const allKudos = (kudosProp && kudosProp.length ? kudosProp : kudosFromStorage) || [];
+  const allKudos =
+    (kudosProp && kudosProp.length ? kudosProp : kudosFromStorage) || [];
 
-  const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+  const MONTHS = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
   const now = new Date();
   const [selMonth, setSelMonth] = useState(now.getMonth());
   const [selYear, setSelYear] = useState(now.getFullYear());
   const [keyword, setKeyword] = useState("");
   const [rows, setRows] = useState([]);
 
+  // NEW: quick add-to-archive inputs
+  const [newKudo, setNewKudo] = useState("");
+  const [flash, setFlash] = useState("");
+
   function withinSelectedMonth(dt) {
-    return dt.getMonth() === Number(selMonth) && dt.getFullYear() === Number(selYear);
+    return (
+      dt.getMonth() === Number(selMonth) &&
+      dt.getFullYear() === Number(selYear)
+    );
   }
 
   function generate() {
@@ -63,18 +84,85 @@ export default function Reports({
     setRows(filtered);
   }
 
+  // NEW: save one kudo to localStorage and refresh current view
+  function saveKudo() {
+    const text = newKudo.trim();
+    if (!text) return;
+
+    const old = (() => {
+      try {
+        return JSON.parse(localStorage.getItem("kudos") || "[]");
+      } catch {
+        return [];
+      }
+    })();
+
+    old.push({
+      id: Date.now(),
+      content: text,
+      createdAt: new Date().toISOString(),
+    });
+
+    localStorage.setItem("kudos", JSON.stringify(old));
+    setNewKudo("");
+    setFlash("✅ Kudo saved!");
+    setTimeout(() => setFlash(""), 1500);
+
+    // If user is viewing the current month, this will show immediately
+    generate();
+  }
+
   const totalCount = rows.length;
 
   const S = {
     wrap: { paddingTop: 16 },
-    card: { background: "#fff", borderRadius: 16, padding: 16, border: "1px solid #e2e8f0" },
+    card: {
+      background: "#fff",
+      borderRadius: 16,
+      padding: 16,
+      border: "1px solid #e2e8f0",
+    },
     h2: { marginTop: 0, color: "var(--rove-blue, #003da5)" },
-    row: { display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap", marginBottom: 8 },
-    input: { padding: "10px 12px", borderRadius: 12, border: "1px solid #e2e8f0" },
-    btn: { padding: "10px 14px", borderRadius: 12, border: "1px solid var(--rove-blue, #003da5)", background: "var(--rove-blue, #003da5)", color: "#fff", cursor: "pointer" },
-    table: { width: "100%", borderCollapse: "collapse", fontSize: 14, marginTop: 10, background: "#fff", borderRadius: 12, overflow: "hidden" },
-    th: { textAlign: "left", borderBottom: "1px solid #e5e7eb", padding: "10px 12px", background: "#f1f5f9" },
-    td: { borderBottom: "1px solid #f1f5f9", padding: "10px 12px", verticalAlign: "top" },
+    row: {
+      display: "flex",
+      gap: 8,
+      alignItems: "center",
+      flexWrap: "wrap",
+      marginBottom: 8,
+    },
+    input: {
+      padding: "10px 12px",
+      borderRadius: 12,
+      border: "1px solid #e2e8f0",
+    },
+    btn: {
+      padding: "10px 14px",
+      borderRadius: 12,
+      border: "1px solid var(--rove-blue, #003da5)",
+      background: "var(--rove-blue, #003da5)",
+      color: "#fff",
+      cursor: "pointer",
+    },
+    table: {
+      width: "100%",
+      borderCollapse: "collapse",
+      fontSize: 14,
+      marginTop: 10,
+      background: "#fff",
+      borderRadius: 12,
+      overflow: "hidden",
+    },
+    th: {
+      textAlign: "left",
+      borderBottom: "1px solid #e5e7eb",
+      padding: "10px 12px",
+      background: "#f1f5f9",
+    },
+    td: {
+      borderBottom: "1px solid #f1f5f9",
+      padding: "10px 12px",
+      verticalAlign: "top",
+    },
     muted: { color: "#64748b" },
     kpi: { fontWeight: 800, fontSize: 16 },
   };
@@ -84,15 +172,24 @@ export default function Reports({
       <div className="card" style={S.card}>
         <h2 style={S.h2}>Monthly Kudos Report</h2>
 
+        {/* Controls to view a month */}
         <div style={S.row}>
-          <select value={selMonth} onChange={(e)=>setSelMonth(Number(e.target.value))} style={S.input}>
-            {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
+          <select
+            value={selMonth}
+            onChange={(e) => setSelMonth(Number(e.target.value))}
+            style={S.input}
+          >
+            {MONTHS.map((m, i) => (
+              <option key={m} value={i}>
+                {m}
+              </option>
+            ))}
           </select>
 
           <input
             type="number"
             value={selYear}
-            onChange={(e)=>setSelYear(Number(e.target.value))}
+            onChange={(e) => setSelYear(Number(e.target.value))}
             style={{ ...S.input, width: 120 }}
           />
 
@@ -103,21 +200,43 @@ export default function Reports({
             style={{ ...S.input, minWidth: 240 }}
           />
 
-          <button style={S.btn} onClick={generate}>Generate</button>
+          <button style={S.btn} onClick={generate}>
+            Generate
+          </button>
+        </div>
+
+        {/* NEW: Quick add-to-archive (localStorage) */}
+        <div style={{ ...S.row, marginTop: 12 }}>
+          <input
+            value={newKudo}
+            onChange={(e) => setNewKudo(e.target.value)}
+            placeholder="Write a kudo to save…"
+            style={{ ...S.input, minWidth: 260 }}
+          />
+          <button style={S.btn} onClick={saveKudo}>
+            Save kudo
+          </button>
+          {flash && <span style={{ color: "#16a34a" }}>{flash}</span>}
         </div>
 
         {rows.length ? (
           <>
             <div style={{ marginTop: 6 }}>
               <span style={S.kpi}>{totalCount}</span>{" "}
-              <span style={S.muted}>kudos in {MONTHS[selMonth]} {selYear}</span>
+              <span style={S.muted}>
+                kudos in {MONTHS[selMonth]} {selYear}
+              </span>
             </div>
             <table style={S.table}>
               <thead>
                 <tr>
-                  <th style={S.th} width="56">#</th>
+                  <th style={S.th} width="56">
+                    #
+                  </th>
                   <th style={S.th}>Kudos</th>
-                  <th style={S.th} width="220">Date &amp; Time</th>
+                  <th style={S.th} width="220">
+                    Date &amp; Time
+                  </th>
                 </tr>
               </thead>
               <tbody>
@@ -135,7 +254,10 @@ export default function Reports({
           <div style={{ ...S.muted, marginTop: 8 }}>
             Pick month/year (and optionally a keyword) then click <b>Generate</b>.
             {(!allKudos || allKudos.length === 0) && (
-              <> No data found. If you’re clearing the wall at 21:00, consider persisting kudos to localStorage.</>
+              <>
+                {" "}
+                No data found. Add some with the <b>Save kudo</b> box above.
+              </>
             )}
           </div>
         )}
@@ -143,3 +265,4 @@ export default function Reports({
     </div>
   );
 }
+
