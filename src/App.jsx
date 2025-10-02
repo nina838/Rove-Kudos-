@@ -1,4 +1,5 @@
-// src/App.jsx
+// Add this import to the top of src/App.jsx
+import { KUDOS_REF, push } from './firebase.js'; // Imports the reference and the push function// src/App.jsx
 import React, { useState, useEffect } from "react";
 import { Routes, Route, Link, Navigate } from "react-router-dom";
 import KudosPanel from "./components/KudosPanel.jsx";
