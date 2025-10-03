@@ -187,7 +187,7 @@ function Wall({ kudos }) {
   );
 }
 
-// App component handles the main Firebase connection
+// App component handles the main Firebase connection and state management
 export default function App() {
   const [kudos, setKudos] = useState([]);
 
@@ -207,19 +207,12 @@ export default function App() {
       }
     });
 
-    // Auto-clear logic for the local display state
-    const checkAndClear = () => {
-      const now = new Date();
-      if (now.getHours() >= 21) {
-        setKudos([]); // Only clear the local display state
-      }
-    };
-    const t = setInterval(checkAndClear, 60 * 1000);
+    // 🛑 CRITICAL CHANGE: The auto-clear interval is completely removed.
+    // The Live Wall will now always show all kudos loaded from Firebase.
     
-    // Cleanup function: stop listening to Firebase and clear the interval
+    // Cleanup function: stop listening to Firebase
     return () => {
       unsubscribe(); 
-      clearInterval(t);
     };
   }, []); 
 
